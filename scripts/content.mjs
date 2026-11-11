@@ -49,7 +49,7 @@ async function prepare() {
 async function approve(id) {
   if (!process.argv.includes('--i-reviewed-fictional-content') && !process.argv.includes('--i-reviewed-content')) throw new Error('请先阅读待审稿，确认后使用 --i-reviewed-content。');
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id ?? '')) throw new Error('请提供有效 id。');
-  const text = await fs.readFile(path.join(reviewDir, `${id}.md`), 'utf8');
+  const text = (await fs.readFile(path.join(reviewDir, `${id}.md`), 'utf8')).replace(/\r\n?/g, '\n');
   if (process.argv.includes('--i-reviewed-fictional-content') && parseEntry(text).demo !== true) throw new Error('真实学习笔记不能使用虚构内容确认标记。');
   assertApproved(text, { sha256: digest(text) }, id);
   await fs.mkdir(entriesDir, { recursive: true });

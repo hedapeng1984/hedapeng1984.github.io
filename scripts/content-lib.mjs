@@ -3,7 +3,7 @@ import { parse, stringify } from 'yaml';
 import { marked } from 'marked';
 
 export function digest(text) {
-  return createHash('sha256').update(text).digest('hex');
+  return createHash('sha256').update(text.replace(/\r\n?/g, '\n')).digest('hex');
 }
 
 export function parseEntry(text, options = {}) {

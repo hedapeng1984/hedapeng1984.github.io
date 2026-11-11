@@ -32,3 +32,9 @@ test('允许公开 HTTPS 来源，拒绝内网地址和明文 HTTP', () => {
   assert.ok(publicText.includes('https://example.org/article'));
   for (const url of ['http://example.org', 'https://localhost/a', 'https://192.168.1.1/a', 'https://user:pass@example.org/']) assert.throws(() => redactEntry(original + `\n[来源](${url})`, rules));
 });
+test('Windows 与 Mac/Linux 换行不同仍识别为同一审核版本', () => {
+  const text = redactEntry(original, rules);
+  const record = { sha256: digest(text) };
+  assertApproved(text.replaceAll('\n', '\r\n'), record, 'sample-entry');
+  assert.throws(() => assertApproved(text.replaceAll('\n', '\r\n') + '新增信息', record, 'sample-entry'), /审核后被修改/);
+});
