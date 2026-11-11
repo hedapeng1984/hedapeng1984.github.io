@@ -8,5 +8,15 @@
     "sha256": "12e2fb43b45a41a43d9aa285a04ad14f19db0d5ebc2b2a6ebf1968ffaec3c79b",
     "approvedAt": "2026-11-11T04:21:59.066Z",
     "fictional": true
+  },
+  "musk-thinking": {
+    "sha256": "ec45fa031d64b7368030cff7e37cd34bf2d033d6e921d9a2f2ad08541eb3ed53",
+    "approvedAt": "2026-11-11T04:54:46.004Z",
+    "fictional": false
+  },
+  "cancer-learning-notes": {
+    "sha256": "02d2512339c7501eb5744c0da6a458ab4f1df5a65a929f5b922b378a0c29a1d3",
+    "approvedAt": "2026-11-11T04:54:46.207Z",
+    "fictional": false
   }
 }
