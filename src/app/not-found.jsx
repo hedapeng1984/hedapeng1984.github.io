@@ -1,0 +1,1 @@
+export default function NotFound() { return <section className="not-found shell"><p className="eyebrow">404 / AN UNWRITTEN PAGE</p><h1>这一页，暂时留白。</h1><p>也许地址变了，也许故事还没有写到这里。</p><a className="read-link" href="/">回到日记 →</a></section>; }

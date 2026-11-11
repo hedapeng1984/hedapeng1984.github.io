@@ -23,6 +23,7 @@ export function validateEntry(entry, { allowUnreviewedLinks = false } = {}) {
     if (typeof entry[key] !== 'string' || !entry[key].trim()) throw new Error(`缺少 ${key}。`);
   }
   if (!Array.isArray(entry.tags) || entry.tags.some(tag => typeof tag !== 'string')) throw new Error('tags 必须是文字列表。');
+  if (entry.kind !== undefined && !['journal', 'note'].includes(entry.kind)) throw new Error('kind 只能是 journal 或 note。');
   if (/<\s*(?:[a-z!/?])/i.test(entry.body)) throw new Error('试刊不接受原始 HTML。');
   // 来源链接可以公开，图片和本地附件必须另行审核，不能自动复制。
   if (/!\[\[|\[\[|(?<![a-z0-9])[A-Z]:[\\/]/im.test(entry.body)) throw new Error('不接受本地路径或双向链接。');
@@ -45,6 +46,7 @@ export function serializeEntry(entry) {
     tags: entry.tags,
     summary: entry.summary,
     demo: entry.demo ?? true,
+    ...(entry.kind ? { kind: entry.kind } : {}),
   }).trimEnd()}\n---\n\n${entry.body.trim()}\n`;
 }
 
@@ -68,6 +70,7 @@ export function redactEntry(text, rules) {
     tags: entry.tags.map(replace),
     body: replace(entry.body),
     demo: entry.demo ?? true,
+    ...(entry.kind ? { kind: entry.kind } : {}),
   };
   validateEntry(publicEntry);
   return serializeEntry(publicEntry);
@@ -78,7 +81,7 @@ export function assertApproved(text, record, id) {
   const entry = parseEntry(text);
   if (entry.id !== id) throw new Error('文件名与日记 id 不一致。');
   if (typeof entry.demo !== 'boolean') throw new Error('必须明确标记是否为虚构内容。');
-  const allowed = new Set(['id', 'date', 'title', 'summary', 'tags', 'demo', 'body']);
+  const allowed = new Set(['id', 'date', 'title', 'summary', 'tags', 'demo', 'kind', 'body']);
   if (Object.keys(entry).some(key => !allowed.has(key))) throw new Error('公开稿含有未经允许的元信息。');
   return entry;
 }

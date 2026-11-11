@@ -25,7 +25,8 @@ try {
   run(process.execPath, ['scripts/content.mjs', 'prepare']);
   run(process.execPath, ['scripts/content.mjs', 'status', '--fail-on-pending']);
   run(process.execPath, ['scripts/content.mjs', 'check']);
-  run(process.execPath, ['scripts/astro.mjs', 'build']);
+  run(process.execPath, ['scripts/next.mjs', 'build', '--webpack']);
+  run(process.execPath, ['scripts/check-export.mjs']);
   run('git', ['add', '--', 'content/entries', 'content/reviews.json']);
   if (run('git', ['diff', '--cached', '--quiet'], { allowOne: true }) !== 0) {
     run('git', ['commit', '-m', 'Publish reviewed journal entries']);

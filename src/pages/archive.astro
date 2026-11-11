@@ -1,7 +1,0 @@
----
-import Layout from '../layouts/Layout.astro';
-import { getEntries, prettyDate } from '../lib/entries.mjs';
-const entries = getEntries();
-const years = [...new Set(entries.map(entry => entry.date.slice(0, 4)))];
----
-<Layout title="日记归档" active="archive"><section class="simple-page"><p class="eyebrow">THE COLLECTED DAYS</p><h1>日子有迹可循。</h1><p class="page-intro">把零散的片段，交还给时间。</p>{years.map(year => <section class="archive-year"><h2>{year}<small>{entries.filter(entry => entry.date.startsWith(year)).length} 篇</small></h2>{entries.filter(entry => entry.date.startsWith(year)).map(entry => <a class="archive-link" href={`/diary/${entry.id}/`}><time datetime={entry.date}>{prettyDate(entry.date)}</time><span>{entry.title}</span><span aria-hidden="true">↗</span></a>)}</section>)}</section></Layout>

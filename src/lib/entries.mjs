@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { marked } from 'marked';
 import { assertApproved } from '../../scripts/content-lib.mjs';
+import { entryKind } from './site.mjs';
+import { plainText, readingStats, renderMarkdown } from './markdown.mjs';
 
 export function getEntries() {
   const root = path.join(process.cwd(), 'content');
@@ -9,8 +10,10 @@ export function getEntries() {
   return fs.readdirSync(path.join(root, 'entries')).filter(name => name.endsWith('.md')).map(name => {
     const id = name.slice(0, -3);
     const entry = assertApproved(fs.readFileSync(path.join(root, 'entries', name), 'utf8'), reviews[id], id);
-    return { ...entry, html: marked.parse(entry.body), words: entry.body.replace(/\s/g, '').length };
-  }).sort((a, b) => b.date.localeCompare(a.date));
+    return { ...entry, ...renderMarkdown(entry.body), ...readingStats(entry.body), kind: entryKind(entry), searchText: plainText(entry.body) };
+  }).sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 }
 
-export const prettyDate = date => `${Number(date.slice(5, 7))}月${Number(date.slice(8, 10))}日`;
+export function listEntries(entries) {
+  return entries.map(({ id, title, date, summary, tags, demo, kind, words, minutes, searchText }) => ({ id, title, date, summary, tags, demo, kind, words, minutes, searchText }));
+}
