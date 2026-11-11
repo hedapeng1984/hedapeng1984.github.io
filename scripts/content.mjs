@@ -47,16 +47,17 @@ async function prepare() {
 }
 
 async function approve(id) {
-  if (!process.argv.includes('--i-reviewed-fictional-content')) throw new Error('请先阅读待审稿。本次虚构试验确认后使用 --i-reviewed-fictional-content。');
+  if (!process.argv.includes('--i-reviewed-fictional-content') && !process.argv.includes('--i-reviewed-content')) throw new Error('请先阅读待审稿，确认后使用 --i-reviewed-content。');
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id ?? '')) throw new Error('请提供有效 id。');
   const text = await fs.readFile(path.join(reviewDir, `${id}.md`), 'utf8');
+  if (process.argv.includes('--i-reviewed-fictional-content') && parseEntry(text).demo !== true) throw new Error('真实学习笔记不能使用虚构内容确认标记。');
   assertApproved(text, { sha256: digest(text) }, id);
   await fs.mkdir(entriesDir, { recursive: true });
   await fs.writeFile(path.join(entriesDir, `${id}.md`), text);
   const manifest = await readManifest();
-  manifest[id] = { sha256: digest(text), approvedAt: new Date().toISOString(), fictional: true };
+  manifest[id] = { sha256: digest(text), approvedAt: new Date().toISOString(), fictional: parseEntry(text).demo };
   await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-  console.log(`已确认虚构公开稿：${id}`);
+  console.log(`已确认公开稿：${id}`);
 }
 
 async function check() {
@@ -71,7 +72,7 @@ async function check() {
   if (Object.keys(manifest).some(id => !ids.has(id))) throw new Error('审核记录与文章文件不一致；删除文章时需一并移除审核记录。');
   const publicFiles = await fs.readdir(path.join(site, 'public'));
   if (publicFiles.some(name => !['CNAME', 'robots.txt', 'favicon.svg', '.nojekyll'].includes(name))) throw new Error('public 目录出现未经审核的额外资源。');
-  console.log(`审核校验通过：${names.length} 篇虚构日记。`);
+  console.log(`审核校验通过：${names.length} 篇公开稿。`);
 }
 
 async function status() {

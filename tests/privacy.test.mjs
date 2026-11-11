@@ -27,3 +27,8 @@ test('无效日期、越界 id 被拒绝', () => {
   assert.throws(() => redactEntry(original.replace('sample-entry', '../private'), rules));
   assert.throws(() => redactEntry(original.replace('2026-11-11', '2026-02-31'), rules));
 });
+test('允许公开 HTTPS 来源，拒绝内网地址和明文 HTTP', () => {
+  const publicText = redactEntry(original + '\n[来源](https://example.org/article)\n', rules);
+  assert.ok(publicText.includes('https://example.org/article'));
+  for (const url of ['http://example.org', 'https://localhost/a', 'https://192.168.1.1/a', 'https://user:pass@example.org/']) assert.throws(() => redactEntry(original + `\n[来源](${url})`, rules));
+});
