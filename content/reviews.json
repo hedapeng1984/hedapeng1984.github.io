@@ -10,13 +10,13 @@
     "fictional": true
   },
   "musk-thinking": {
-    "sha256": "ec45fa031d64b7368030cff7e37cd34bf2d033d6e921d9a2f2ad08541eb3ed53",
-    "approvedAt": "2026-11-11T04:54:46.004Z",
+    "sha256": "575ed062417c22eb01e9a8342ae4f3d6afb2c066f310e02f8441d3486852281b",
+    "approvedAt": "2026-11-11T05:06:44.253Z",
     "fictional": false
   },
   "cancer-learning-notes": {
-    "sha256": "02d2512339c7501eb5744c0da6a458ab4f1df5a65a929f5b922b378a0c29a1d3",
-    "approvedAt": "2026-11-11T04:54:46.207Z",
+    "sha256": "702ad3db963943f42ef66b21186b61e1035496737fee8ba57e2f9009b965607e",
+    "approvedAt": "2026-11-11T05:06:44.503Z",
     "fictional": false
   }
 }
