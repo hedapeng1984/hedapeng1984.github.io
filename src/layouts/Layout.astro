@@ -1,0 +1,46 @@
+---
+import '../styles/global.css';
+const { title = '大鹏的日记', description = '留住一些日常，写给漫长的以后。', active = '', article = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{title === '大鹏的日记' ? `${title} · 留住一些日常` : `${title} · 大鹏的日记`}</title>
+    <script is:inline>
+      try { document.documentElement.dataset.theme = localStorage.getItem('journal-theme') || 'light'; } catch {}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="brand" href="/" aria-label="大鹏的日记首页"><span class="brand-mark">日</span><span>大鹏的日记<small>NOTES ON ORDINARY DAYS</small></span></a>
+        <nav aria-label="主导航">
+          <a href="/" aria-current={active === 'home' ? 'page' : undefined}>日记</a>
+          <a href="/archive/" aria-current={active === 'archive' ? 'page' : undefined}>归档</a>
+          <a href="/about/" aria-current={active === 'about' ? 'page' : undefined}>关于</a>
+          <button class="theme-toggle" type="button" aria-label="切换明暗主题">夜读</button>
+        </nav>
+      </header>
+      <main id="main"><slot /></main>
+      <footer class="site-footer"><span>© 2026 大鹏的日记</span><span>用文字，留住一些日常。</span><a href="/about/#trial">虚构日记试刊</a></footer>
+    </div>
+    <script>
+      const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
+      function update() { if (toggle) { const dark = document.documentElement.dataset.theme === 'dark'; toggle.textContent = dark ? '日读' : '夜读'; toggle.setAttribute('aria-pressed', String(dark)); } }
+      toggle?.addEventListener('click', () => { const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; try { localStorage.setItem('journal-theme', theme); } catch {} update(); });
+      update();
+    </script>
+  </body>
+</html>

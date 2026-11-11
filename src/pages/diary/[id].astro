@@ -1,0 +1,15 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getEntries } from '../../lib/entries.mjs';
+export function getStaticPaths() { const all = getEntries(); return all.map((entry, index) => ({ params: { id: entry.id }, props: { entry, newer: all[index - 1], older: all[index + 1] } })); }
+const { entry, newer, older } = Astro.props;
+---
+<Layout title={entry.title} description={entry.summary} article>
+  <article class="reading-page">
+    <a class="back-link" href="/">← 返回日记</a>
+    <header class="article-header"><p class="eyebrow"><time datetime={entry.date}>{entry.date.replaceAll('-', ' / ')}</time><span>·</span>{entry.tags.join(' / ')}</p><h1>{entry.title}</h1><p class="article-summary">{entry.summary}</p><div class="article-fineprint"><span>约 {entry.words} 字</span><span>虚构日记 · 试刊</span></div></header>
+    <div class="prose" set:html={entry.html} />
+    <div class="article-ending" aria-hidden="true">· · ·</div>
+    <nav class="article-nav" aria-label="相邻日记"><div>{older && <a href={`/diary/${older.id}/`}><small>← 较早的一页</small><span>{older.title}</span></a>}</div><div>{newer && <a href={`/diary/${newer.id}/`}><small>较新的一页 →</small><span>{newer.title}</span></a>}</div></nav>
+  </article>
+</Layout>

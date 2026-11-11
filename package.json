@@ -1,0 +1,21 @@
+{
+  "name": "hedapeng-journal",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "dev": "node scripts/astro.mjs dev --host 127.0.0.1",
+    "prepare:diaries": "node scripts/content.mjs prepare",
+    "review:status": "node scripts/content.mjs status",
+    "check:content": "node scripts/content.mjs check",
+    "build": "npm run check:content && node scripts/astro.mjs build",
+    "preview": "node scripts/astro.mjs preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "astro": "^5.15.0",
+    "marked": "^16.4.1",
+    "yaml": "^2.8.1"
+  }
+}

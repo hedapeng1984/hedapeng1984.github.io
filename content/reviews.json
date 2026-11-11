@@ -1,0 +1,12 @@
+{
+  "a-walk-after-rain": {
+    "sha256": "d749e445406600e471e4f5875dc1ca8cb980d4d63f3cbe459dae231d5f913fb3",
+    "approvedAt": "2026-11-11T04:21:58.874Z",
+    "fictional": true
+  },
+  "a-page-in-the-morning": {
+    "sha256": "12e2fb43b45a41a43d9aa285a04ad14f19db0d5ebc2b2a6ebf1968ffaec3c79b",
+    "approvedAt": "2026-11-11T04:21:59.066Z",
+    "fictional": true
+  }
+}
