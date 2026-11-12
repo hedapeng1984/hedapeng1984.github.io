@@ -1,6 +1,6 @@
 # 大鹏的日记
 
-基于 Next.js App Router 的 Markdown 日记网站，以李笑来官网的留白、衬线字、细分隔线和蓝红点色为审美参考，独立实现中文排版。当前为**四篇文章试刊**：两篇虚构日记，以及两篇用户提供的学习笔记。虚构内容与学习笔记分开标注。
+基于 Next.js App Router 的 Markdown 日记网站，以李笑来官网的留白、衬线字、细分隔线和蓝红点色为审美参考，独立实现中文排版。当前为**八篇文章试刊**：六篇虚构日记，以及两篇用户提供的学习笔记。虚构内容与学习笔记分开标注。
 
 网址：https://www.hedapeng.com
 
@@ -25,9 +25,19 @@ npm run preview
 
 Next.js 使用 `output: 'export'` 与 `trailingSlash: true`，构建产物为 `out/`。推送 main 后由 GitHub Actions 自动构建并发布到 GitHub Pages。自定义域名为 www.hedapeng.com，不需要租用服务器或运行 Node.js 服务。
 
-保留 `/diary/<id>/` 原网址。网站含日记、笔记、全文搜索、主题筛选、归档、文章目录、阅读进度、三态主题和 RSS。中文正文桌面 18px、手机 17px，最大宽度 680px，表格可横向滚动。中英文字体随站点托管，开源许可见 `/font-licenses.txt`。
+保留 `/diary/<id>/` 原网址。网站含日记、笔记、全文搜索、主题筛选、归档、文章目录、阅读进度、四态主题（跟随系统 / 浅色 / 暖纸 / 深色）、构建期代码高亮、打印样式和 RSS。中文正文桌面 18px、手机 17px，最大宽度 680px，表格可横向滚动。中英文字体随站点托管，开源许可见 `/font-licenses.txt`。
 
 新文章默认分类为日记；新学习笔记在原稿 YAML 中设置 `kind: note`，日记可设置 `kind: journal`。分类修改与正文修改一样需要重新审核，首批两篇学习笔记兼容原有格式。
+
+## 排版刻度
+
+所有字号、间距、行高、字距与颜色都收在 `src/app/tokens.css`，`globals.css` 只引用变量。改版式时改 token 层，不要在组件里写死数值。
+
+- **颜色**一律用 `oklch()`。纸墨的 chroma 只有 0.003 左右（几乎无彩），只有强调色放到 0.12 以上；深色是同一批色的反相，色相不变，所以明暗切换不偏色。另有第三档「暖纸」，把整批色的色温从冷调换到暖调。
+- **字号与间距**按具体场景定值，不做比例尺：需要 21px 就是 `--fs-21`，不需要从 16px 推导 scale。这样每个场景都有名字，也避免改一处牵动全局。
+- **行宽**优先用 `em`（一个汉字 = 1em），改字号时"每行多少字"自动不变；但需要和相邻区块对齐的地方（正文栏与目录框）必须用 `px`，否则两边按各自字号算出不同宽度会错位。
+- **中文排版**单独一组变量：`--cjk-track-body` 给正文加字距，`--cjk-track-display` 给大标题用，`--cjk-gap` 管中英混排间距；强调用点线着重号而不是斜体，斜体对汉字是失真的。
+- 代码高亮在构建期完成（`src/lib/markdown.mjs`），只认字符串、注释、数字和关键字四类，浏览器端零 JS，也不引入额外依赖。
 
 ## 改版前备份与回退
 
@@ -35,8 +45,31 @@ Next.js 使用 `output: 'export'` 与 `trailingSlash: true`，构建产物为 `o
 
 ## Mac 自动同步
 
-脚本：`scripts/sync-macos.sh`；安装任务：`scripts/install-macos-agent.sh`。
+脚本：`scripts/sync-macos.sh`（同步入口）、`scripts/sync-sources.mjs`（原稿同步）、`scripts/sync.mjs`（审核、构建、推送）；安装与卸载任务：`scripts/install-macos-agent.sh`、`scripts/uninstall-macos-agent.sh`。
 
 原稿默认放在本仓库外的 `../private/originals/`，替换规则在 `../private/privacy-rules.json`，也可用环境变量 `DIARY_PRIVATE_DIR` 指定。没有原稿时构建现有网站不受影响，自动整理任务会停止。需要人工阅读待审稿并批准，才能自动推送。确认指令：`node scripts/content.mjs approve <id> --i-reviewed-content`。
+
+### 原稿自动进站
+
+Mac 上的 Markdown 原稿（印象笔记导出、Obsidian 仓库、iCloud 文件夹等）可以配成"源目录"，每次同步时自动进到 `private/originals/`。在仓库外的 `private/sources.json` 里配置：
+
+```json
+{
+  "sources": ["~/Documents/日记原稿", "~/Sites/日记原稿"],
+  "extensions": [".md"]
+}
+```
+
+规则是**只新增、不静默覆盖**：内容一致直接跳过；内容不同会列出来等人决定，确认后用 `node scripts/sync-sources.mjs --force` 覆盖。源目录只读，绝不会被修改或删除。
+
+### 安装后台任务
+
+```sh
+zsh scripts/install-macos-agent.sh
+```
+
+会检查 Node 版本、写一份 `sources.json` 模板、生成 LaunchAgent（每 5 分钟一次、登录后自启、日志在 `~/Library/Logs/hedapeng-journal/`）。任务里只写绝对路径，但 node 的实际位置由 `sync-macos.sh` 在运行时自己解析，所以用 nvm 换版本也不会失效。
+
+任务只覆盖"登录用户"域：Mac 休眠、关机、退出登录时不保证运行，恢复后补跑。网站由 GitHub Pages 托管，不依赖这台 Mac 一直开机。卸载：`zsh scripts/uninstall-macos-agent.sh`（加 `--purge` 连配置和日志一起删）。
 
 网页无统计、评论、外部字体或数据库。当前 noindex 仅为试刊搜索提示，不构成访问保护。
