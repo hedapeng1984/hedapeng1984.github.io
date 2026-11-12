@@ -18,5 +18,25 @@
     "sha256": "702ad3db963943f42ef66b21186b61e1035496737fee8ba57e2f9009b965607e",
     "approvedAt": "2026-11-11T05:06:44.503Z",
     "fictional": false
+  },
+  "a-quiet-evening": {
+    "sha256": "24d399bd71229a0668e47fd97d9e9eb5c7cc00655706e082d037a6642c585392",
+    "approvedAt": "2026-11-12T09:06:40.534Z",
+    "fictional": true
+  },
+  "reading-without-notes": {
+    "sha256": "afcc104318c0c64ddc72a44929932009c6d2e032707da05421b79deddcadf6c8",
+    "approvedAt": "2026-11-12T09:06:40.720Z",
+    "fictional": true
+  },
+  "the-long-way-home": {
+    "sha256": "d9c6a69a0c6a72020ca5600fbbbfde806a25aff2ac75e6c5ba6a9d4206526396",
+    "approvedAt": "2026-11-12T09:06:40.929Z",
+    "fictional": true
+  },
+  "small-tools-of-attention": {
+    "sha256": "814a8270d7486f95e994c8ab4b83d9c6fa43afb6923887625c98cf28fc7bd58a",
+    "approvedAt": "2026-11-12T09:06:41.153Z",
+    "fictional": true
   }
 }
