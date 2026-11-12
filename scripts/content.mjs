@@ -18,9 +18,9 @@ const mdNames = async dir => (await fs.readdir(dir).catch(error => {
 })).filter(name => name.endsWith('.md')).sort();
 
 async function prepare() {
-  const rules = JSON.parse(await fs.readFile(path.join(privateRoot, 'privacy-rules.json'), 'utf8'));
   const names = await mdNames(path.join(privateRoot, 'originals'));
-  if (!names.length) throw new Error('没有找到原稿；不会自动删除任何已发布日记。');
+  if (!names.length) { console.log('没有找到原稿，跳过整理；已发布的文章不受影响。'); return; }
+  const rules = JSON.parse(await fs.readFile(path.join(privateRoot, 'privacy-rules.json'), 'utf8'));
   await fs.mkdir(reviewDir, { recursive: true });
   const seen = new Set();
   for (const name of names) {

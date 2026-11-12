@@ -33,12 +33,23 @@ fi
 
 mkdir -p "$HOME/Library/LaunchAgents" "$LOG_DIR"
 
-# 私有目录：任务运行时必须和手动执行时指向同一个位置
+# 私有目录：任务运行时必须和手动执行时指向同一个位置。
+# private/ 按设计不在仓库里（真实原稿不能上传），所以新克隆的机器上这里会是空的。
+# 没有就建一个空的让流程能跑起来，真正的原稿与规则由使用者补齐。
 PRIVATE_DIR="${DIARY_PRIVATE_DIR:-$SITE_DIR/../private}"
-if [[ ! -d "$PRIVATE_DIR" ]]; then
-  echo "私有目录不存在：$PRIVATE_DIR" >&2
-  echo "请先确认 private/originals 与 private/privacy-rules.json 已经就位。" >&2
-  exit 1
+mkdir -p "$PRIVATE_DIR/originals" "$PRIVATE_DIR/review"
+
+if [[ ! -f "$PRIVATE_DIR/privacy-rules.json" ]]; then
+  cat > "$PRIVATE_DIR/privacy-rules.json" <<'JSON'
+{
+  "replacements": {
+  }
+}
+JSON
+  echo "提示：已创建空的脱敏规则 $PRIVATE_DIR/privacy-rules.json"
+  echo "      在里面写下要替换的名字与地点，例如："
+  echo '        "replacements": { "某个名字": "一位朋友", "某个地点": "住处" }'
+  echo "      补上规则之前，请不要把带真实身份信息的稿件放进公开流程。"
 fi
 
 # 原稿源配置：没有就写一份模板，提示用户填写
