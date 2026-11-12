@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-const themes = ['system', 'light', 'dark'];
-const labels = { system: '跟随系统', light: '浅色', dark: '深色' };
+const themes = ['system', 'light', 'warm', 'dark'];
+const labels = { system: '跟随系统', light: '浅色', warm: '暖纸', dark: '深色' };
 const nav = [['/journal/', '日记'], ['/notes/', '笔记'], ['/archive/', '归档'], ['/about/', '关于']];
 
 export default function Header() {
@@ -37,7 +37,7 @@ export default function Header() {
       <nav className="desktop-nav" aria-label="主导航">{nav.map(([href, label]) => <a href={href} key={href}>{label}</a>)}</nav>
       <div className="header-actions">
         <a className="search-shortcut" href="/archive/#search" aria-label="搜索文章"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></a>
-        <button className="theme-toggle icon-button" onClick={switchTheme} aria-label={`当前主题：${labels[theme]}，切换为${labels[themes[(themes.indexOf(theme) + 1) % themes.length]]}`} data-preference={theme} type="button"><span aria-hidden="true">{theme === 'dark' ? '☾' : theme === 'light' ? '☼' : '◐'}</span></button>
+        <button className="theme-toggle icon-button" onClick={switchTheme} aria-label={`当前主题：${labels[theme]}，切换为${labels[themes[(themes.indexOf(theme) + 1) % themes.length]]}`} data-preference={theme} type="button"><span aria-hidden="true">{theme === 'dark' ? '☾' : theme === 'light' ? '☼' : theme === 'warm' ? '☀' : '◐'}</span></button>
         <button className="menu-toggle icon-button" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? '关闭导航' : '打开导航'} onClick={() => setMenuOpen(!menuOpen)} type="button"><span className={menuOpen ? 'menu-lines is-open' : 'menu-lines'} aria-hidden="true"/></button>
       </div>
     </div>

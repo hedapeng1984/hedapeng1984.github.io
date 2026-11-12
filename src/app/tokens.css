@@ -1,0 +1,209 @@
+@charset "UTF-8";
+
+/* ============================================================================
+   设计 token —— 全站唯一的刻度来源
+   ---------------------------------------------------------------------------
+   约定：
+   1. 颜色一律用 oklch()，纸墨低色度（chroma ≈ 0.003），强调色才放到 0.12 以上。
+      明暗两套只是同一套色的反相，色相不变，所以切换不会偏色。
+   2. 字号 / 间距 / 行高 / 字距按"具体场景值"命名，不做比例尺。
+      需要 21px 就是 --fs-21，不需要从 16px 推导出 scale。
+   3. 中文的行宽用 em（一个汉字 = 1em），不用 ch —— ch 是"0"字宽，
+      对中文没有意义。
+   4. 改版式时只改这一层，组件样式一律引用变量。
+   ============================================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* ---------- 纸与墨（冷调）---------- */
+  --paper: oklch(0.9819 0.0029 264.5);
+  --surface: oklch(0.9605 0.0046 258.3);
+  --surface-2: oklch(0.9339 0.0071 268.5);
+  --ink: oklch(0.2479 0.0058 271.2);
+  --secondary: oklch(0.4713 0.0134 269.4);
+  --muted: oklch(0.5620 0.0147 266.6);
+  --line: oklch(0.8847 0.0088 264.5);
+  --line-soft: oklch(0.9397 0.0058 264.5);
+  --blue: oklch(0.4602 0.1338 257.8);
+  --red: oklch(0.4724 0.1228 30);
+  --texture: oklch(0.7973 0.0182 264.5 / 0.2);
+
+  /* ---------- 语义别名 ---------- */
+  --accent: var(--blue);
+  --accent-ink: var(--blue);
+  --accent-wash: color-mix(in oklch, var(--blue) 8%, var(--paper));
+  --rule: var(--line);
+  --rule-soft: var(--line-soft);
+
+  /* ---------- 阴影：由墨色派生，不用纯黑 ---------- */
+  --shadow-hair: color-mix(in oklch, var(--ink) 5%, transparent);
+  --shadow-soft: color-mix(in oklch, var(--ink) 8%, transparent);
+  --shadow-mid: color-mix(in oklch, var(--ink) 12%, transparent);
+  --shadow-pop: color-mix(in oklch, var(--ink) 20%, transparent);
+
+  /* ---------- 字体 ---------- */
+  --serif: "Newsreader Variable", "Noto Serif SC Variable", "Songti SC", Georgia, serif;
+  --reading: "Noto Serif SC Variable", "Songti SC", "STSong", "SimSun", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* ---------- 字重 ---------- */
+  --fw-light: 300;
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+
+  /* ---------- 中文排版 ---------- */
+  --cjk-track-body: 0.015em;
+  --cjk-track-display: 0.01em;
+  --cjk-track-eyebrow: 0.08em;
+  --cjk-gap: 0.15em;
+  --cjk-em-line: dotted;
+  --cjk-em-thickness: 1.5px;
+  --cjk-em-offset: 0.33em;
+
+  /* ---------- 行宽 ----------
+   优先用 em：一个汉字 = 1em，改字号时"每行多少字"自动保持不变。
+   但需要和相邻区块对齐的地方（正文栏与目录框）必须用 px，
+   否则 em 会按各自的字号算出不同宽度，出现错位。 */
+  --measure-read: 680px;
+  --measure-read-narrow: 650px;
+  --measure-summary: 41em;
+  --measure-lead: 43em;
+  --measure-card: 35em;
+  --measure-copy: 48em;
+  --measure-quote: 34em;
+  --measure-note: 700px;
+  --measure-wide: 78em;
+  --measure-header: 960px;
+  --measure-collection: 1050px;
+  --measure-about: 860px;
+
+  /* ---------- 链接与着重号 ---------- */
+  --underline-offset: 0.28em;
+  --underline-thickness: 1px;
+
+  /* ---------- 代码高亮配色 ---------- */
+  --tok-kw: oklch(0.46 0.13 285);
+  --tok-str: oklch(0.42 0.09 150);
+  --tok-num: oklch(0.48 0.12 30);
+  --tok-com: oklch(0.55 0.02 250);
+  --tok-fn: oklch(0.44 0.11 255);
+  --tok-punc: oklch(0.5 0.01 250);
+
+  /* ---------- 版心与断点 ---------- */
+  --shell: 1168px;
+  --gutter: 80px;
+  --gutter-md: 56px;
+  --gutter-sm: 40px;
+  --bp-xl: 1180px;
+  --bp-lg: 1050px;
+  --bp-md: 850px;
+  --bp-sm: 700px;
+  --bp-xs: 400px;
+
+  /* ---------- 圆角 ---------- */
+  --rad-hair: 1px;
+  --rad-sm: 2px;
+  --rad-md: 4px;
+  --rad-lg: 8px;
+  --rad-pill: 999px;
+
+  /* ---------- 动效 ---------- */
+  --dur-snap: 0.1s;
+  --dur-quick: 0.15s;
+  --dur-normal: 0.2s;
+  --dur-slow: 0.3s;
+
+  /* ---------- 层级 ---------- */
+  --z-grain: 0;
+  --z-content: 1;
+  --z-header: 30;
+  --z-progress: 45;
+  --z-skip: 100;
+}
+
+/* ---------- 深色：同一批色相反相，色相保持不动 ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: oklch(0.2255 0.0107 260.7);
+  --surface: oklch(0.2593 0.0144 261.7);
+  --surface-2: oklch(0.2911 0.0146 256.8);
+  --ink: oklch(0.9274 0.0027 106.5);
+  --secondary: oklch(0.7855 0.0104 267.3);
+  --muted: oklch(0.7270 0.0173 262.7);
+  --line: oklch(0.3779 0.0205 262.6);
+  --line-soft: oklch(0.3076 0.0160 259.8);
+  --blue: oklch(0.7849 0.0850 260.7);
+  --red: oklch(0.7623 0.0711 34.2);
+  --texture: oklch(0.6364 0.0221 267.2 / 0.125);
+  --shadow-hair: oklch(0 0 0 / 0.25);
+  --shadow-soft: oklch(0 0 0 / 0.35);
+  --shadow-mid: oklch(0 0 0 / 0.45);
+  --shadow-pop: oklch(0 0 0 / 0.55);
+  --tok-kw: oklch(0.78 0.1 285);
+  --tok-str: oklch(0.79 0.11 150);
+  --tok-num: oklch(0.79 0.1 30);
+  --tok-com: oklch(0.63 0.02 250);
+  --tok-fn: oklch(0.8 0.09 255);
+  --tok-punc: oklch(0.72 0.01 250);
+}
+
+/* ---------- 暖纸：同一套结构，换一个纸色温度 ---------- */
+:root[data-theme="warm"] {
+  color-scheme: light;
+  --paper: oklch(0.9798 0.0086 84.6);
+  --surface: oklch(0.9535 0.0131 82.4);
+  --surface-2: oklch(0.9284 0.0161 82.1);
+  --ink: oklch(0.2429 0.0134 72.2);
+  --secondary: oklch(0.4466 0.0204 75.9);
+  --muted: oklch(0.5502 0.0245 76.4);
+  --line: oklch(0.8753 0.0221 83.3);
+  --line-soft: oklch(0.9288 0.0153 83.0);
+  --blue: oklch(0.4700 0.1087 253.9);
+  --red: oklch(0.4958 0.1192 32.8);
+  --texture: oklch(0.6 0.045 74 / 0.16);
+}
+
+/* ---------- 字号刻度 ---------- */
+:root {
+  --fs-8: 8px; --fs-9: 9px; --fs-10: 10px; --fs-11: 11px; --fs-12: 12px; --fs-13: 13px;
+  --fs-14: 14px; --fs-15: 15px; --fs-16: 16px; --fs-17: 17px; --fs-18: 18px; --fs-19: 19px;
+  --fs-20: 20px; --fs-21: 21px; --fs-22: 22px; --fs-23: 23px; --fs-24: 24px; --fs-25: 25px;
+  --fs-26: 26px; --fs-27: 27px; --fs-28: 28px; --fs-29: 29px; --fs-30: 30px; --fs-31: 31px;
+  --fs-32: 32px; --fs-33: 33px; --fs-34: 34px; --fs-35: 35px; --fs-37: 37px; --fs-40: 40px;
+  --fs-43: 43px; --fs-49: 49px; --fs-61: 61px;
+}
+
+/* ---------- 行高刻度：与字号配对使用 ---------- */
+:root {
+  --lh-115: 1.15; --lh-134: 1.34; --lh-140: 1.4; --lh-145: 1.45; --lh-150: 1.5; --lh-155: 1.55;
+  --lh-160: 1.6; --lh-165: 1.65; --lh-170: 1.7; --lh-180: 1.8; --lh-185: 1.85; --lh-190: 1.9;
+  --lh-195: 1.95; --lh-198: 1.98; --lh-200: 2;
+}
+
+/* ---------- 字距刻度：小字放开，大字收紧 ---------- */
+:root {
+  --track-10: 0.01em; --track-15: 0.015em; --track-20: 0.02em; --track-25: 0.025em; --track-30: 0.03em; --track-35: 0.035em;
+  --track-60: 0.06em; --track-70: 0.07em; --track-100: 0.1em; --track-110: 0.11em; --track-150: 0.15em;
+  --track-n15: -0.015em; --track-n20: -0.02em; --track-n25: -0.025em; --track-n30: -0.03em; --track-n35: -0.035em; --track-n40: -0.04em;
+  --track-n45: -0.045em; --track-n55: -0.055em;
+}
+
+/* ---------- 间距刻度 ---------- */
+:root {
+  --sp-2: 2px; --sp-3: 3px; --sp-4: 4px; --sp-5: 5px; --sp-6: 6px;
+  --sp-7: 7px; --sp-8: 8px; --sp-9: 9px; --sp-10: 10px; --sp-11: 11px;
+  --sp-12: 12px; --sp-13: 13px; --sp-14: 14px; --sp-15: 15px; --sp-16: 16px;
+  --sp-17: 17px; --sp-18: 18px; --sp-19: 19px; --sp-20: 20px; --sp-21: 21px;
+  --sp-22: 22px; --sp-23: 23px; --sp-24: 24px; --sp-25: 25px; --sp-26: 26px;
+  --sp-27: 27px; --sp-28: 28px; --sp-29: 29px; --sp-30: 30px; --sp-31: 31px;
+  --sp-32: 32px; --sp-33: 33px; --sp-34: 34px; --sp-35: 35px; --sp-36: 36px;
+  --sp-37: 37px; --sp-38: 38px; --sp-40: 40px; --sp-42: 42px; --sp-43: 43px;
+  --sp-44: 44px; --sp-45: 45px; --sp-47: 47px; --sp-48: 48px; --sp-49: 49px;
+  --sp-52: 52px; --sp-53: 53px; --sp-55: 55px; --sp-57: 57px; --sp-58: 58px;
+  --sp-60: 60px; --sp-62: 62px; --sp-64: 64px; --sp-65: 65px; --sp-72: 72px;
+  --sp-76: 76px; --sp-80: 80px; --sp-83: 83px; --sp-87: 87px; --sp-90: 90px;
+  --sp-100: 100px; --sp-105: 105px; --sp-110: 110px; --sp-112: 112px; --sp-150: 150px;
+}

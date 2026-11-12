@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { renderMarkdown, readingStats } from '../src/lib/markdown.mjs';
+import { renderMarkdown, readingStats, highlightCode } from '../src/lib/markdown.mjs';
 import { entryKind } from '../src/lib/site.mjs';
 import { redactEntry, parseEntry } from '../scripts/content-lib.mjs';
 
@@ -25,4 +25,21 @@ test('新笔记的 kind 元信息可以通过脱敏流程，未知分类拒绝',
   const text = '---\nid: new-note\ntitle: 一页笔记\ndate: 2026-11-11\ntags: [阅读]\nsummary: 阅读后的想法\nkind: note\n---\n\n正文。\n';
   assert.equal(parseEntry(redactEntry(text, { replacements: {} })).kind, 'note');
   assert.throws(() => redactEntry(text.replace('kind: note', 'kind: unknown'), {}));
+});
+test('代码块渲染为带语言标签的 figure，关键字与字符串被高亮', () => {
+  const { html } = renderMarkdown('```js\nconst a = "x"; // 注释\n```');
+  assert.ok(html.includes('class="code-fence"'));
+  assert.ok(html.includes('<figcaption>js</figcaption>'));
+  assert.ok(html.includes('<span class="tok-kw">const</span>'));
+  assert.ok(html.includes('<span class="tok-str">"x"</span>'));
+  assert.ok(html.includes('tok-com'));
+});
+test('代码块里的标签被转义，不会被当成真实 HTML 注入', () => {
+  const { html } = renderMarkdown('```html\n<script>alert(1)</script>\n```');
+  assert.ok(!html.includes('<script>'));
+  assert.ok(html.includes('&lt;script&gt;'));
+});
+test('未知语言不高亮也不丢失内容', () => {
+  assert.equal(highlightCode('a < b && c', 'ruby'), 'a &lt; b &amp;&amp; c');
+  assert.equal(highlightCode('const x = 1', ''), 'const x = 1');
 });
