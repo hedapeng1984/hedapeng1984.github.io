@@ -1,9 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { run, site } from './lib/run.mjs';
 
-const site = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const lockPath = path.join(site, '.cache/sync-lock.json');
 const STALE_LOCK_MS = 30 * 60 * 1000;
 
@@ -17,14 +15,6 @@ if (fs.existsSync(lockPath)) {
   console.log('发现上次残留的同步锁（已超过 30 分钟），已清理。');
 }
 fs.writeFileSync(lockPath, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
-
-function run(command, args, { allowOne = false, allowFail = false, capture = false } = {}) {
-  const result = spawnSync(command, args, { cwd: site, encoding: 'utf8', stdio: capture ? 'pipe' : 'inherit', windowsHide: true, env: { ...process.env, GCM_INTERACTIVE: 'never' } });
-  if (result.error) throw new Error(`${command} 无法执行：${result.error.message}`);
-  const failed = result.status !== 0 && !(allowOne && result.status === 1);
-  if (failed && !allowFail) throw new Error(`${command} 失败，已停止同步。`);
-  return capture ? result.stdout.trim() : result.status;
-}
 
 try {
   const repositoryRoot = run('git', ['rev-parse', '--show-toplevel'], { capture: true });
@@ -53,7 +43,8 @@ try {
       run('git', ['commit', '-m', 'Publish reviewed journal entries']);
     }
     // 总是尝试推送，补传上次断网留下的本地提交。
-    run('git', ['push', 'origin', 'HEAD:main']);
+    // 推送会撞上链路干扰（Geph 出口被成片重置），所以本轮内重试 3 次。
+    run('git', ['push', 'origin', 'HEAD:main'], { retry: 3 });
   }
   console.log(`最后成功同步：${new Date().toISOString()}`);
 } catch (error) { console.error(error.message); process.exitCode = 1; }
