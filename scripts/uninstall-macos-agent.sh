@@ -6,6 +6,7 @@
 set -euo pipefail
 
 LABEL="com.hedapeng.journal-sync"
+WATCHDOG_LABEL="com.hedapeng.journal-watchdog"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 LOG_DIR="$HOME/Library/Logs/hedapeng-journal"
 PURGE=0
@@ -16,6 +17,14 @@ if launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1; then
   echo "已停止运行中的任务。"
 else
   echo "任务当前未加载。"
+fi
+
+# 守护任务也一并停掉。它的配置文件默认保留（与同步任务一致）。
+if launchctl print "gui/$(id -u)/$WATCHDOG_LABEL" >/dev/null 2>&1; then
+  launchctl bootout "gui/$(id -u)/$WATCHDOG_LABEL" 2>/dev/null || true
+  echo "已停止运行中的任务：$WATCHDOG_LABEL"
+else
+  echo "任务当前未加载：$WATCHDOG_LABEL"
 fi
 
 if [[ -e "$PLIST" ]]; then
