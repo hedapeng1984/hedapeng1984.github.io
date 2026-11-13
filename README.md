@@ -49,6 +49,23 @@ Next.js 使用 `output: 'export'` 与 `trailingSlash: true`，构建产物为 `o
 
 原稿默认放在本仓库外的 `../private/originals/`，替换规则在 `../private/privacy-rules.json`，也可用环境变量 `DIARY_PRIVATE_DIR` 指定。没有原稿时构建现有网站不受影响，自动整理任务会停止。需要人工阅读待审稿并批准，才能自动推送。确认指令：`node scripts/content.mjs approve <id> --i-reviewed-content`。
 
+### 脱敏规则
+
+`../private/privacy-rules.json` 有三段规则，作用不同：
+
+| 字段 | 写法 | 例子 |
+|---|---|---|
+| `replacements` | 手写「原文 → 替代写法」，优先级最高 | `"Emily": "一位患者"` |
+| `names` | 人名名单，自动换成拼音首字母 | `"王小明"` → `WXM` |
+| `places` | 具体地点名单，自动换成拼音首字母 | `"某某市某某路12号"` → `MXMSMML12H` |
+
+规则要点：
+
+- **只出现姓氏不脱敏。** 单字条目一律忽略，所以「徐老师」「李总」这类称呼原样保留；名单里写 `陈` 不会误伤别人。
+- **名单里没有的名字和地点不自动替换。** 中文里大量普通词以姓氏开头（说明、和平、方向、马路），自动替换会把正文改得莫名其妙。整理稿件时会列出「疑似人名 / 疑似地点」，你确认后写进名单 —— 漏登记的风险由审稿环节兜底。
+- **拼音按单字取音**，不看上下文：多音字取常用读音（长 → Z，行 → X）。表由 macOS 自带的 ICU 离线生成，是静态数据文件，运行时不依赖第三方包。
+- 手写 `replacements` 与名单同时命中同一条原文时，手写优先。
+
 ### 原稿自动进站
 
 Mac 上的 Markdown 原稿（印象笔记导出、Obsidian 仓库、iCloud 文件夹等）可以配成"源目录"，每次同步时自动进到 `private/originals/`。在仓库外的 `private/sources.json` 里配置：

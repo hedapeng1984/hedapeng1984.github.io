@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { parse, stringify } from 'yaml';
 import { marked } from 'marked';
+import { detectNames, detectPlaces, maskName } from './redact.mjs';
 
 export function digest(text) {
   return createHash('sha256').update(text.replace(/\r\n?/g, '\n')).digest('hex');
@@ -54,8 +55,7 @@ export function redactEntry(text, rules) {
   const entry = parseEntry(text, { allowUnreviewedLinks: true });
   const replace = value => {
     let result = value;
-    for (const [from, to] of Object.entries(rules.replacements ?? {}).sort((a, b) => b[0].length - a[0].length)) {
-      if (!from) throw new Error('替换规则不能包含空字符串。');
+    for (const [from, to] of buildReplacements(rules)) {
       result = result.split(from).join(to);
     }
     return result
@@ -74,6 +74,62 @@ export function redactEntry(text, rules) {
   };
   validateEntry(publicEntry);
   return serializeEntry(publicEntry);
+}
+
+/**
+ * 把规则整理成一张「原文 → 替代写法」的表，按原文长度倒序（长��先替，避免短串先命中）。
+ *
+ * 三类规则：
+ *   replacements —— 手写字面替换，优先级最高（你已经明确指定了替代词，就用它）。
+ *   names        —— 人名，转成拼音首字母（陈书宁 → CSN）。
+ *   places       —— 具体地点名，转成拼音首字母（星河市梧桐路 → XHSWTL）。
+ *
+ * 单字条目一律跳过：按你的规则，只出现姓氏时不需要脱敏（徐老师、李总）。
+ * 把单字姓氏写进名单会误伤「李总」「王阿姨」这类称呼，也会误伤以姓氏开头的普通词。
+ */
+export function buildReplacements(rules) {
+  const manual = Object.entries(rules?.replacements ?? {});
+  const listed = [];
+  for (const [key, group] of [['names', '人名'], ['places', '地点名']]) {
+    const values = rules?.[key];
+    if (values === undefined) continue;
+    if (!Array.isArray(values)) throw new Error(`规则里的 ${key} 必须是一个列表。`);
+    for (const value of values) {
+      const source = String(value ?? '').trim();
+      if (!source) throw new Error(`${group}规则不能包含空字符串。`);
+      if ([...source].length < 2) continue;      // 单字（只有姓）不脱敏
+      const masked = maskName(source);
+      if (!masked || masked === source) continue;
+      listed.push([source, masked]);
+    }
+  }
+  return [...manual, ...listed].sort((a, b) => b[0].length - a[0].length);
+}
+
+/**
+ * 找出稿子里还没登记进名单的疑似人名与地点。
+ *
+ * 只报告，不自动替换：中文里大量普通词以姓氏开头（说明、和平、方向、马路……），
+ * 自动替换会把正文改得莫名其妙，而且很难看出「BT」原来是「白天」。
+ * 漏登记的风险由审稿环节兜底 —— 你在待审稿里能一眼看出不对劲。
+ */
+export function findSuspects(text, rules = {}) {
+  const entry = parseEntry(text, { allowUnreviewedLinks: true });
+  const listed = key => {
+    const values = rules[key];
+    if (values === undefined) return [];
+    if (!Array.isArray(values)) throw new Error(`规则里的 ${key} 必须是一个列表。`);
+    return values.map(value => String(value ?? '').trim()).filter(Boolean);
+  };
+  const registeredNames = listed('names');
+  const registeredPlaces = listed('places');
+  // 已经登记的长条目会覆盖它的片段（登记了「某某路12号」，不必再报「12号」）。
+  // 单字姓氏不算覆盖 —— 它本来就不参与替换。
+  const covered = (value, list) => list.some(item => [...item].length > 1 && (item.includes(value) || value.includes(item)));
+  const searchable = [entry.title, entry.summary, entry.tags.join(' '), entry.body].join('\n');
+  const names = detectNames(searchable).filter(value => !registeredNames.includes(value) && !covered(value, registeredNames));
+  const places = detectPlaces(searchable).filter(value => !registeredPlaces.includes(value) && !covered(value, registeredPlaces));
+  return { names, places };
 }
 
 export function assertApproved(text, record, id) {

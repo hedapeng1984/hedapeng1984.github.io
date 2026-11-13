@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertApproved, digest, parseEntry, redactEntry } from './content-lib.mjs';
+import { assertApproved, digest, findSuspects, parseEntry, redactEntry } from './content-lib.mjs';
 
 const site = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const privateRoot = path.resolve(process.env.DIARY_PRIVATE_DIR || path.join(site, '../private'));
@@ -23,11 +23,18 @@ async function prepare() {
   const rules = JSON.parse(await fs.readFile(path.join(privateRoot, 'privacy-rules.json'), 'utf8'));
   await fs.mkdir(reviewDir, { recursive: true });
   const seen = new Set();
+  const suspectNames = new Set();
+  const suspectPlaces = new Set();
   for (const name of names) {
-    const output = redactEntry(await fs.readFile(path.join(privateRoot, 'originals', name), 'utf8'), rules);
+    const source = await fs.readFile(path.join(privateRoot, 'originals', name), 'utf8');
+    const output = redactEntry(source, rules);
     const id = parseEntry(output).id;
     if (seen.has(id)) throw new Error('存在重复日记 id。');
     seen.add(id);
+    // 没登记进名单的疑似人名与地点：只报告，不自动替换。
+    const suspects = findSuspects(source, rules);
+    for (const value of suspects.names) suspectNames.add(value);
+    for (const value of suspects.places) suspectPlaces.add(value);
     const candidate = path.join(reviewDir, `${id}.md`);
     const existing = await fs.readFile(candidate, 'utf8').catch(() => null);
     // 不覆盖人工编辑的待审稿。原稿变动后先报告差异，要求人工决定如何合并。
@@ -43,6 +50,13 @@ async function prepare() {
     }
     await fs.writeFile(generatedPath, nextGenerated + '\n');
     console.log(`已准备待审稿：${id}`);
+  }
+  if (suspectNames.size || suspectPlaces.size) {
+    console.log('');
+    console.log('⚠ 以下内容没有登记在脱敏名单里，未自动替换。请读一遍待审稿，确认是否需要处理：');
+    if (suspectNames.size) console.log(`  疑似人名：${[...suspectNames].join('、')}`);
+    if (suspectPlaces.size) console.log(`  疑似地点：${[...suspectPlaces].join('、')}`);
+    console.log(`  需要长期替换的，写进 ${path.join(privateRoot, 'privacy-rules.json')} 的 names / places 列表。`);
   }
 }
 
