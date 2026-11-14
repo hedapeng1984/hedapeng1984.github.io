@@ -90,4 +90,4 @@ zsh scripts/install-macos-agent.sh
 
 任务只覆盖"登录用户"域：Mac 休眠、关机、退出登录时不保证运行，恢复后补跑。网站由 GitHub Pages 托管，不依赖这台 Mac 一直开机。卸载：`zsh scripts/uninstall-macos-agent.sh`（加 `--purge` 连配置和日志一起删）。
 
-网页无统计、评论、外部字体或数据库。当前 noindex 只是搜索提示，不构成访问保护。
+网页无统计、评论、外部字体或数据库。试刊结束后站点已开放搜索引擎收录：`src/lib/site.mjs` 里的 `trial` 改回 `true` 可一键恢复 noindex，`public/robots.txt` 负责放行抓取并指向 sitemap。收录本身不构成访问保护。

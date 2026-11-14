@@ -4,7 +4,8 @@ export const site = {
   url: 'https://www.hedapeng.com',
   description: '一些生活的片段，一些阅读的注脚。写下此刻，留给漫长的以后。',
   repository: 'https://github.com/hedapeng1984/hedapeng1984.github.io',
-  trial: true,
+  // 试刊结束，站点已开放搜索引擎收录。改回 true 可一键恢复 noindex。
+  trial: false,
 };
 
 // 兼容首批稿件；新日记默认为 journal，新笔记可在元信息设置 kind: note。
