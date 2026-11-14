@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { parse, stringify } from 'yaml';
 import { marked } from 'marked';
 import { maskName } from './redact.mjs';
@@ -51,8 +53,8 @@ export function serializeEntry(entry) {
   }).trimEnd()}\n---\n\n${entry.body.trim()}\n`;
 }
 
-export function redactEntry(text, rules) {
-  const entry = parseEntry(text, { allowUnreviewedLinks: true });
+export function redactEntry(text, rules, options = {}) {
+  const entry = parseSourceEntry(text, options);
   const replace = value => {
     let result = value;
     for (const [from, to] of buildMaskRules(rules)) {
@@ -70,12 +72,108 @@ export function redactEntry(text, rules) {
     tags: entry.tags.map(replace),
     // 原稿可能是 Windows 换行。统一成 LF —— 待审稿和公开稿混着两种换行，
     // 人工比对时整篇都显示成「改过了」，真改动反而看不见。
-    body: replace(entry.body).replace(/\r\n?/g, '\n'),
+    body: replace(normalizeInlineHtml(entry.body)).replace(/\r\n?/g, '\n'),
     demo: entry.demo ?? true,
     ...(entry.kind ? { kind: entry.kind } : {}),
   };
   validateEntry(publicEntry);
   return serializeEntry(publicEntry);
+}
+
+/**
+ * 原稿的两种形态。
+ *
+ * 一是自带 YAML 元信息（写在原稿开头）；二是没有 —— 剪藏、从公众号复制来的
+ * 文章通常不带，这时从 private/meta.json 按文件名旁挂一份。
+ *
+ * 旁挂的那份必须写明 demo（true 虚构 / false 真实）：这是「示例」和「真人真事」
+ * 的分界线，猜错就是把演示内容当真实内容发出去。
+ */
+export function parseSourceEntry(text, options = {}) {
+  const source = String(text ?? '').replace(/^﻿/, '');
+  const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+  if (match) {
+    const meta = parse(match[1]);
+    if (!meta || typeof meta !== 'object') throw new Error('元信息格式不正确。');
+    return { ...meta, body: match[2].trim() };
+  }
+  const fallback = options.meta;
+  if (!fallback) throw new Error('原稿缺少 YAML 元信息：写在原稿开头，或写进 private/meta.json。');
+  for (const key of ['id', 'title', 'date', 'summary']) {
+    if (!fallback[key] || !String(fallback[key]).trim()) throw new Error(`旁挂元信息缺少 ${key}。`);
+  }
+  if (!Array.isArray(fallback.tags) || fallback.tags.some(tag => typeof tag !== 'string')) throw new Error('旁挂元信息的 tags 必须是文字列表。');
+  if (typeof fallback.demo !== 'boolean') throw new Error('旁挂元信息必须写明 demo：true 是虚构内容，false 是真人真事。');
+  if (fallback.kind !== undefined && !['journal', 'note'].includes(fallback.kind)) throw new Error('kind 只能是 journal 或 note。');
+  return {
+    id: fallback.id,
+    title: fallback.title,
+    date: fallback.date,
+    tags: fallback.tags,
+    summary: fallback.summary,
+    demo: fallback.demo,
+    ...(fallback.kind ? { kind: fallback.kind } : {}),
+    body: dropLeadingTitle(source, fallback.title),
+  };
+}
+
+// 正文开头那个标题行如果和 title 一模一样，就去掉 —— 页面上已经有大标题了，
+// 再来一个 H1/H2/H3 只是重复。文字不一致就不动，宁可留着也不乱删。
+function dropLeadingTitle(source, title) {
+  const lines = source.split('\n');
+  const first = lines.findIndex(line => line.trim() !== '');
+  if (first >= 0) {
+    const heading = lines[first].match(/^#{1,6}\s+(.*\S)\s*$/);
+    if (heading && heading[1].trim() === String(title).trim()) lines.splice(first, 1);
+  }
+  return lines.join('\n').trim();
+}
+
+// 网页剪藏里常见的内联标签，转成 Markdown 的等价写法；其余原始 HTML 一律拒绝。
+// 注意替换函数的第一个参数是整段匹配，第二个才是捕获组 —— 取错了就把标签包进了代码块。
+const INLINE_HTML_RULES = [
+  [/<kbd\s*>([\s\S]*?)<\/kbd\s*>/gi, (_match, text) => `\`${text}\``],
+  [/<strong\s*>([\s\S]*?)<\/strong\s*>/gi, (_match, text) => `**${text}**`],
+  [/<b\s*>([\s\S]*?)<\/b\s*>/gi, (_match, text) => `**${text}**`],
+  [/<em\s*>([\s\S]*?)<\/em\s*>/gi, (_match, text) => `*${text}*`],
+  [/<i\s*>([\s\S]*?)<\/i\s*>/gi, (_match, text) => `*${text}*`],
+  [/<code\s*>([\s\S]*?)<\/code\s*>/gi, (_match, text) => `\`${text}\``],
+  [/<sup\s*>([\s\S]*?)<\/sup\s*>/gi, (_match, text) => `^${text}`],
+  [/<sub\s*>([\s\S]*?)<\/sub\s*>/gi, (_match, text) => `~${text}`],
+  [/<br\s*\/?\s*>/gi, () => '  \n'],
+];
+
+export function normalizeInlineHtml(text) {
+  // 代码块里的内容原样保留 —— mermaid 图、命令示例里的尖括号不是标签。
+  const parts = String(text ?? '').split(/(```[\s\S]*?```)/g);
+  return parts.map((part, index) => {
+    if (index % 2 === 1) return part;
+    let out = part;
+    for (const [pattern, replacement] of INLINE_HTML_RULES) out = out.replace(pattern, replacement);
+    return out;
+  }).join('');
+}
+
+/**
+ * 删掉指向本地文件的图片引用 —— 那些文件不会发布，留在正文里就是一堆断链。
+ * 只删「本地找不到文件」的；远程图片和本地存在的图片照旧交给校验去拒。
+ */
+export function stripMissingImages(text, baseDir) {
+  const removed = [];
+  const out = [];
+  for (const line of String(text ?? '').split('\n')) {
+    let touched = false;
+    const next = line.replace(/!\[[^\]]*\]\(([^)\s]+)\)/g, (match, target) => {
+      if (/^(https?:)?\/\//i.test(target)) return match;
+      if (fs.existsSync(path.resolve(baseDir, target))) return match;
+      removed.push(target);
+      touched = true;
+      return '';
+    });
+    if (touched && next.trim() === '') continue;
+    out.push(next);
+  }
+  return { text: out.join('\n'), removed };
 }
 
 /**
@@ -127,6 +225,17 @@ export function findAlerts(text, rules) {
     if (at.length) hits.push({ term, lines: at });
   }
   return hits;
+}
+
+/**
+ * 待审稿能不能「退回已批准版本」。
+ *
+ * 只有当待审稿就是整理脚本刚生成的那一版（没有手工改过）时才允许退回 ——
+ * 手工改过的待审稿一律不动，免得把人的修改冲掉。
+ */
+export function canResetDraft(draftText, generatedDigest) {
+  if (!generatedDigest) return false;
+  return digest(draftText) === generatedDigest;
 }
 
 export function assertApproved(text, record, id) {

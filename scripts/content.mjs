@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertApproved, digest, findAlerts, parseEntry, redactEntry } from './content-lib.mjs';
+import { assertApproved, canResetDraft, digest, findAlerts, parseEntry, redactEntry, stripMissingImages } from './content-lib.mjs';
 
 const site = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const privateRoot = path.resolve(process.env.DIARY_PRIVATE_DIR || path.join(site, '../private'));
@@ -23,6 +23,18 @@ const loadRules = async () => JSON.parse(await fs.readFile(path.join(privateRoot
   throw error;
 }));
 
+// 旁挂元信息也是可选的：原稿自带 YAML 就不需要它。
+// 键是原稿文件名，值是 id / title / date / tags / summary / kind / demo。
+// 以 _ 开头的键当说明，不参与匹配。
+const loadMeta = async () => {
+  const parsed = JSON.parse(await fs.readFile(path.join(privateRoot, 'meta.json'), 'utf8').catch(error => {
+    if (error.code === 'ENOENT') return '{}';
+    throw error;
+  }));
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('private/meta.json 必须是一个对象：键是原稿文件名。');
+  return Object.fromEntries(Object.entries(parsed).filter(([key]) => !key.startsWith('_')));
+};
+
 // 只报不改。命中的行号指给你看，改法由你决定 —— 直接编辑待审稿，原稿不动。
 function reportAlerts(id, hits) {
   for (const hit of hits) {
@@ -35,6 +47,7 @@ async function prepare() {
   const names = await mdNames(path.join(privateRoot, 'originals'));
   if (!names.length) { console.log('没有找到原稿，跳过整理；已发布的文章不受影响。'); return; }
   const rules = JSON.parse(await fs.readFile(path.join(privateRoot, 'privacy-rules.json'), 'utf8'));
+  const meta = await loadMeta();
   await fs.mkdir(reviewDir, { recursive: true });
   const seen = new Set();
   const skipped = [];
@@ -44,7 +57,11 @@ async function prepare() {
     // 不该让所有待审稿都停在这里 —— 跳过它，把原因报出来就行。
     try {
       const source = await fs.readFile(path.join(privateRoot, 'originals', name), 'utf8');
-      const output = redactEntry(source, rules);
+      // 图片文件不会发布，本地又找不到的引用就是断链 —— 删掉并报出来。
+      const cleaned = stripMissingImages(source, path.join(privateRoot, 'originals'));
+      if (cleaned.removed.length) console.log(`已删除 ${cleaned.removed.length} 处断链图片（本地没有对应文件）：${name}`);
+      const sidecar = meta[name];
+      const output = redactEntry(cleaned.text, rules, { meta: sidecar });
       const id = parseEntry(output).id;
       if (seen.has(id)) throw new Error('存在重复日记 id。');
       seen.add(id);
@@ -63,7 +80,7 @@ async function prepare() {
       }
       await fs.writeFile(generatedPath, nextGenerated + '\n');
       alerts += reportAlerts(id, findAlerts(await fs.readFile(candidate, 'utf8'), rules));
-      console.log(`已准备待审稿：${id}`);
+      console.log(`已准备待审稿：${id}${sidecar && !/^---\r?\n/.test(source.trim()) ? '（元信息来自 private/meta.json）' : ''}`);
     } catch (error) {
       skipped.push(name);
       console.log(`已跳过：${name} —— ${error.message}`);
@@ -85,6 +102,27 @@ async function approve(id) {
   manifest[id] = { sha256: digest(text), approvedAt: new Date().toISOString(), fictional: parseEntry(text).demo };
   await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
   console.log(`已确认公开稿：${id}`);
+}
+
+// 把待审稿退回成「已批准的公开稿」。
+//
+// 有一种情况会让待审稿和公开稿对不上：原稿改了、整理脚本重新生成了一版待审稿，
+// 但那一版没被审就卡在那里，于是发布闸一直关着，而你其实早就批准过更好的版本。
+// 这个动作把待审稿恢复成已批准的那一版 —— 只在待审稿确实只是自动重生成、
+// 没有手工改过时才做，手工改过的待审稿一律不动。
+async function resetDraft(id) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id ?? '')) throw new Error('请提供有效 id。');
+  const draftPath = path.join(reviewDir, `${id}.md`);
+  const generatedPath = path.join(reviewDir, `${id}.generated.sha256`);
+  const publishedPath = path.join(entriesDir, `${id}.md`);
+  const draft = await fs.readFile(draftPath, 'utf8').catch(() => null);
+  if (!draft) throw new Error('没有这份待审稿。');
+  const generated = (await fs.readFile(generatedPath, 'utf8').catch(() => '')).trim();
+  if (!canResetDraft(draft, generated)) throw new Error('这份待审稿有手工修改或来源不明，不会自动覆盖。请自己比对后再决定。');
+  const published = await fs.readFile(publishedPath, 'utf8').catch(() => null);
+  if (!published) throw new Error('还没有已批准的公开稿可以退回。');
+  await fs.writeFile(draftPath, published);
+  console.log(`已把待审稿退回成已批准的公开稿：${id}（手工修改未被触碰）`);
 }
 
 async function check() {
@@ -127,9 +165,10 @@ try {
   const [command, id] = process.argv.slice(2);
   if (command === 'prepare') await prepare();
   else if (command === 'approve') await approve(id);
+  else if (command === 'reset-draft') await resetDraft(id);
   else if (command === 'check') await check();
   else if (command === 'status') await status();
-  else throw new Error('用法：content.mjs prepare | approve <id> | status | check');
+  else throw new Error('用法：content.mjs prepare | approve <id> | reset-draft <id> | status | check');
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;

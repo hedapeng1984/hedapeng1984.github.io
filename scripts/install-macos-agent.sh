@@ -60,6 +60,18 @@ JSON
   echo "      补上规则之前，请不要把带真实身份信息的稿件放进公开流程。"
 fi
 
+# 旁挂元信息：剪藏来的文章通常不带 YAML 元信息，靠这个文件补齐。
+# 没有它就建一份空的，整理时带元信息需求的原稿会被跳过（并说明原因）。
+META_JSON="$PRIVATE_DIR/meta.json"
+if [[ ! -f "$META_JSON" ]]; then
+  cat > "$META_JSON" <<'JSON'
+{
+  "_说明": "原稿没有 YAML 元信息时，在这里按文件名补一份。键是 private/originals/ 里的文件名，值需要 id / title / date / tags / summary / kind / demo。demo 必须写明：true 是虚构内容，false 是真人真事。"
+}
+JSON
+  echo "提示：已创建空的旁挂元信息 $META_JSON"
+fi
+
 # 原稿源配置：没有就写一份模板，提示用户填写
 SOURCES_JSON="$PRIVATE_DIR/sources.json"
 if [[ ! -f "$SOURCES_JSON" ]]; then

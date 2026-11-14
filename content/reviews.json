@@ -13,5 +13,25 @@
     "sha256": "814a8270d7486f95e994c8ab4b83d9c6fa43afb6923887625c98cf28fc7bd58a",
     "approvedAt": "2026-11-12T09:06:41.153Z",
     "fictional": true
+  },
+  "grayscale-world-sleep": {
+    "sha256": "c10d822c9431c819888d372caf176c4c309f53a08a470af75ac71570d13ada66",
+    "approvedAt": "2026-11-14T06:16:33.182Z",
+    "fictional": false
+  },
+  "edge-immersive-reader": {
+    "sha256": "405b91c2cb3542b396f2d4bf21d522f3c452c473f23a8c82451085687c8801a3",
+    "approvedAt": "2026-11-14T06:16:33.230Z",
+    "fictional": false
+  },
+  "five-second-rule": {
+    "sha256": "a5bb06a0b41953f9aa5759073fe494d7316d45747014e86f706776b8a9865582",
+    "approvedAt": "2026-11-14T06:16:33.276Z",
+    "fictional": false
+  },
+  "cost-of-running": {
+    "sha256": "ef32b0f1b0716e59dad8b73665ca574778cf9fdff3a96e69ecd96bf52ed069f7",
+    "approvedAt": "2026-11-14T06:16:33.321Z",
+    "fictional": false
   }
 }
