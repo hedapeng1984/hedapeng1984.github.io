@@ -353,9 +353,26 @@ FIRST_RUN=0
 if [[ -n "$last_run_epoch" ]]; then
   gap_min=$(( (now_epoch - last_run_epoch) / 60 ))
   if (( gap_min > SLEEP_GRACE_MIN )); then
-    last_start=$(grep -E '^=== 同步开始' "$SYNC_LOG" 2>/dev/null | tail -1 | sed -E 's/^=== 同步开始 ([0-9-]+ [0-9:]+).*/\1/' || true)
-    last_start_epoch=$(local_to_epoch "$last_start" || echo "")
-    if [[ -n "$last_start_epoch" ]] && (( last_start_epoch > last_run_epoch )); then
+    # 我们缺席的这段时间里，机器是一直醒着，还是睡了一觉？
+    #
+    # 判据：缺席后「最早的那轮同步」距现在多久。
+    #   - 就在不久前（机器刚醒，同步任务先于我们补跑）→ 之前在睡，不算我们卡死；
+    #   - 很久以前（缺席期间同步一直在跑）→ 机器一直醒着，我们本该每隔 30 分钟跑一次 → 我们卡死了。
+    #
+    # 旧判据（只看「有没有比上次守护更晚的同步」）在睡醒时必然误报：
+    # 唤醒后同步任务（5 分钟一轮）总是先于守护（30 分钟一轮）补跑，
+    # 于是每次睡醒都被判成「守护卡住了 8 小时」—— 2026-11-14 凌晨实测误报两次。
+    first_after=""
+    while read -r ts; do
+      [[ -n "$ts" ]] || continue
+      e=$(local_to_epoch "$ts" || echo "")
+      [[ -n "$e" ]] || continue
+      if (( e > last_run_epoch )); then
+        first_after="$e"
+        break
+      fi
+    done < <(grep -E '^=== 同步开始' "$SYNC_LOG" 2>/dev/null | sed -E 's/^=== 同步开始 ([0-9-]+ [0-9:]+).*/\1/' || true)
+    if [[ -n "$first_after" ]] && (( (now_epoch - first_after) > SLEEP_GRACE_MIN * 60 )); then
       RES_alive="fail"; DET_alive="守护任务自身卡住了 ${gap_min} 分钟（同期同步任务还在正常跑）"
     else
       SLEPT=1
