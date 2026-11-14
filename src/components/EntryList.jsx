@@ -16,7 +16,7 @@ export default function EntryList({ entries, layout = 'rows', searchable = true 
     <div className={layout === 'grid' ? 'entry-list entry-grid' : 'entry-list entry-rows'}>
       {filtered.map((entry, index) => <article className={`entry-row ${layout === 'grid' ? 'entry-card' : ''}`} key={entry.id}>
         <div className="entry-date"><time dateTime={entry.date}>{entry.date.replaceAll('-', '.')}</time><span>{entry.kind === 'note' ? '学习笔记' : '日记'}</span></div>
-        <div className="entry-copy"><div className="entry-meta">{entry.tags.join(' / ')}{entry.demo && <span className="fiction-label">虚构试刊</span>}</div><h3><a href={`/diary/${entry.id}/`}>{entry.title}</a></h3><p>{entry.summary}</p><a className="read-link" href={`/diary/${entry.id}/`}>展开这一页 <span aria-hidden="true">↗</span><span className="sr-only">：{entry.title}</span></a></div>
+        <div className="entry-copy"><div className="entry-meta">{entry.tags.join(' / ')}{entry.demo && <span className="fiction-label">虚构示例</span>}</div><h3><a href={`/diary/${entry.id}/`}>{entry.title}</a></h3><p>{entry.summary}</p><a className="read-link" href={`/diary/${entry.id}/`}>展开这一页 <span aria-hidden="true">↗</span><span className="sr-only">：{entry.title}</span></a></div>
         <span className="entry-index micro" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
       </article>)}
     </div>

@@ -1,5 +1,5 @@
 export const site = {
-  name: '生成',
+  name: '生长',
   handle: 'HEDAPENG',
   url: 'https://www.hedapeng.com',
   description: '一些生活的片段，一些阅读的注脚。写下此刻，留给漫长的以后。',

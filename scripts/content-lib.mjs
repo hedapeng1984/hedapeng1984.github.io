@@ -25,7 +25,7 @@ export function validateEntry(entry, { allowUnreviewedLinks = false } = {}) {
   }
   if (!Array.isArray(entry.tags) || entry.tags.some(tag => typeof tag !== 'string')) throw new Error('tags 必须是文字列表。');
   if (entry.kind !== undefined && !['journal', 'note'].includes(entry.kind)) throw new Error('kind 只能是 journal 或 note。');
-  if (/<\s*(?:[a-z!/?])/i.test(entry.body)) throw new Error('试刊不接受原始 HTML。');
+  if (/<\s*(?:[a-z!/?])/i.test(entry.body)) throw new Error('本站不接受原始 HTML。');
   // 来源链接可以公开，图片和本地附件必须另行审核，不能自动复制。
   if (/!\[\[|\[\[|(?<![a-z0-9])[A-Z]:[\\/]/im.test(entry.body)) throw new Error('不接受本地路径或双向链接。');
   marked.walkTokens(marked.lexer(entry.body), token => {

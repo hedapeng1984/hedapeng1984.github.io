@@ -32,8 +32,8 @@ export default function Header() {
   }
   return <header className="site-header">
     <div className="header-inner shell">
-      <a className="brand" href="/" aria-label="生成首页">生成<span className="brand-star" aria-hidden="true">✳</span></a>
-      <span className="header-caption">@HEDAPENG <span>—</span> A PERSONAL JOURNAL</span>
+      <a className="brand" href="/" aria-label="生长首页">生长<span className="brand-star" aria-hidden="true">✳</span></a>
+      <span className="header-caption">@HEDAPENG <span>—</span> A GROWING JOURNAL</span>
       <nav className="desktop-nav" aria-label="主导航">{nav.map(([href, label]) => <a href={href} key={href}>{label}</a>)}</nav>
       <div className="header-actions">
         <a className="search-shortcut" href="/archive/#search" aria-label="搜索文章"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></a>
