@@ -68,7 +68,9 @@ export function redactEntry(text, rules) {
     title: replace(entry.title),
     summary: replace(entry.summary),
     tags: entry.tags.map(replace),
-    body: replace(entry.body),
+    // 原稿可能是 Windows 换行。统一成 LF —— 待审稿和公开稿混着两种换行，
+    // 人工比对时整篇都显示成「改过了」，真改动反而看不见。
+    body: replace(entry.body).replace(/\r\n?/g, '\n'),
     demo: entry.demo ?? true,
     ...(entry.kind ? { kind: entry.kind } : {}),
   };
