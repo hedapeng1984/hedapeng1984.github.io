@@ -32,7 +32,7 @@ export default function Header() {
   }
   return <header className="site-header">
     <div className="header-inner shell">
-      <a className="brand" href="/" aria-label="大鹏的日记首页">大鹏的日记<span className="brand-star" aria-hidden="true">✳</span></a>
+      <a className="brand" href="/" aria-label="生成首页">生成<span className="brand-star" aria-hidden="true">✳</span></a>
       <span className="header-caption">@HEDAPENG <span>—</span> A PERSONAL JOURNAL</span>
       <nav className="desktop-nav" aria-label="主导航">{nav.map(([href, label]) => <a href={href} key={href}>{label}</a>)}</nav>
       <div className="header-actions">

@@ -9,7 +9,7 @@ import { site } from '../lib/site.mjs';
 
 export const metadata = {
   metadataBase: new URL(site.url),
-  title: { default: '大鹏的日记 · 写下此刻，留给以后', template: '%s · 大鹏的日记' },
+  title: { default: '生成 · 写下此刻，留给以后', template: '%s · 生成' },
   description: site.description,
   generator: 'Next.js',
   robots: { index: !site.trial, follow: !site.trial },
