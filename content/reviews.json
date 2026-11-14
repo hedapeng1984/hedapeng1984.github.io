@@ -1,14 +1,4 @@
 {
-  "a-walk-after-rain": {
-    "sha256": "8b09c477a23ee307083603a41c3042d5bbfa9d8605b1e84932b395ac73552532",
-    "approvedAt": "2026-11-14T01:46:45.322Z",
-    "fictional": true
-  },
-  "a-page-in-the-morning": {
-    "sha256": "44a46dffe58dbe1c444c192ebc2b975736d4d2fee88a3b97deec53776aca0011",
-    "approvedAt": "2026-11-14T01:46:45.232Z",
-    "fictional": true
-  },
   "musk-thinking": {
     "sha256": "f42f6572d488d5dde2a08a4ed7b1f397c065ebdbf37e908d6cf249b2cbca916f",
     "approvedAt": "2026-11-12T14:11:03.838Z",
@@ -18,21 +8,6 @@
     "sha256": "b2a906249f17889db162eb86c58548fc33b18bed046aedccc14e03d1374db09d",
     "approvedAt": "2026-11-12T14:11:03.778Z",
     "fictional": false
-  },
-  "a-quiet-evening": {
-    "sha256": "cac6c64c91d69788639de44416699e9041734b991e3e167ff8748ae640b3bf18",
-    "approvedAt": "2026-11-14T01:46:45.278Z",
-    "fictional": true
-  },
-  "reading-without-notes": {
-    "sha256": "ccd0efc986d3cdeb8d7ed8cd7fc2d7ae8a540d8bddbaaebb38eca56a4dbdf841",
-    "approvedAt": "2026-11-14T01:46:45.369Z",
-    "fictional": true
-  },
-  "the-long-way-home": {
-    "sha256": "d9c6a69a0c6a72020ca5600fbbbfde806a25aff2ac75e6c5ba6a9d4206526396",
-    "approvedAt": "2026-11-12T09:06:40.929Z",
-    "fictional": true
   },
   "small-tools-of-attention": {
     "sha256": "814a8270d7486f95e994c8ab4b83d9c6fa43afb6923887625c98cf28fc7bd58a",
