@@ -23,7 +23,11 @@ try {
   if (branch !== 'main') throw new Error('当前必须在 main 分支，请先人工处理分支。');
   if (run('git', ['diff', '--cached', '--quiet'], { allowOne: true }) !== 0) throw new Error('有其他已暂存改动，请先人工处理。');
 
-  run(process.execPath, ['scripts/content.mjs', 'prepare']);
+  // 整理原稿失败不挡代码推送 —— 只挡内容发布。
+  // 源目录里混进一篇不是日记的文件时，prepare 会跳过它并继续；如果整个步骤真的挂了，
+  // 也只该停内容，不该把脚本修复一起卡住（和待审稿闸一个道理）。
+  const prepareStatus = run(process.execPath, ['scripts/content.mjs', 'prepare'], { allowFail: true });
+  const prepareOk = prepareStatus === 0;
   // 待审稿挡住的是「内容发布」，不是「代码推送」。
   // 待审稿在 private/review/，不会进 content/entries，所以代码改动可以照常推上去 ——
   // 否则审稿期间连脚本修复都发不出去（实测：等审稿的 12 小时里，一次代码修复卡在本地）。
@@ -37,8 +41,8 @@ try {
   const contentChanges = run('git', ['status', '--porcelain', '--', 'content'], { capture: true });
   const local = run('git', ['rev-parse', 'HEAD'], { capture: true, allowFail: true });
   const remote = run('git', ['rev-parse', 'origin/main'], { capture: true, allowFail: true });
-  if (pendingCount > 0) {
-    console.log(`${pendingCount} 篇待人工审核，内容暂不发布。`);
+  if (!prepareOk || pendingCount > 0) {
+    console.log(!prepareOk ? '整理原稿未完成，内容暂不发布。' : `${pendingCount} 篇待人工审核，内容暂不发布。`);
     // 只推代码：待审稿不会跟着走，线上内容保持原样。
     if (local && remote && local !== remote) {
       run('git', ['push', 'origin', 'HEAD:main'], { retry: 3 });

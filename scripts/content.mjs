@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertApproved, digest, parseEntry, redactEntry } from './content-lib.mjs';
+import { assertApproved, digest, findAlerts, parseEntry, redactEntry } from './content-lib.mjs';
 
 const site = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const privateRoot = path.resolve(process.env.DIARY_PRIVATE_DIR || path.join(site, '../private'));
@@ -17,34 +17,60 @@ const mdNames = async dir => (await fs.readdir(dir).catch(error => {
   throw error;
 })).filter(name => name.endsWith('.md')).sort();
 
+// 提醒清单是可选的：文件不在就当没有要盯的字串。
+const loadRules = async () => JSON.parse(await fs.readFile(path.join(privateRoot, 'privacy-rules.json'), 'utf8').catch(error => {
+  if (error.code === 'ENOENT') return {};
+  throw error;
+}));
+
+// 只报不改。命中的行号指给你看，改法由你决定 —— 直接编辑待审稿，原稿不动。
+function reportAlerts(id, hits) {
+  for (const hit of hits) {
+    console.log(`⚠️ 敏感提示：${id} 第 ${hit.lines.join('、')} 行出现「${hit.term}」，请自己改成想公开的写法。`);
+  }
+  return hits.length;
+}
+
 async function prepare() {
   const names = await mdNames(path.join(privateRoot, 'originals'));
   if (!names.length) { console.log('没有找到原稿，跳过整理；已发布的文章不受影响。'); return; }
   const rules = JSON.parse(await fs.readFile(path.join(privateRoot, 'privacy-rules.json'), 'utf8'));
   await fs.mkdir(reviewDir, { recursive: true });
   const seen = new Set();
+  const skipped = [];
+  let alerts = 0;
   for (const name of names) {
-    const source = await fs.readFile(path.join(privateRoot, 'originals', name), 'utf8');
-    const output = redactEntry(source, rules);
-    const id = parseEntry(output).id;
-    if (seen.has(id)) throw new Error('存在重复日记 id。');
-    seen.add(id);
-    const candidate = path.join(reviewDir, `${id}.md`);
-    const existing = await fs.readFile(candidate, 'utf8').catch(() => null);
-    // 不覆盖人工编辑的待审稿。原稿变动后先报告差异，要求人工决定如何合并。
-    const generatedPath = path.join(reviewDir, `${id}.generated.sha256`);
-    const previousGenerated = (await fs.readFile(generatedPath, 'utf8').catch(() => '')).trim();
-    const nextGenerated = digest(output);
-    if (existing && previousGenerated && digest(existing) !== previousGenerated) {
-      if (previousGenerated !== nextGenerated) {
-        throw new Error(`${id}：原稿和人工公开稿均有修改，请先人工合并；现有公开稿未覆盖。`);
+    // 一个文件出问题不能拖垮整批：源目录里混进一篇不是日记的笔记，
+    // 不该让所有待审稿都停在这里 —— 跳过它，把原因报出来就行。
+    try {
+      const source = await fs.readFile(path.join(privateRoot, 'originals', name), 'utf8');
+      const output = redactEntry(source, rules);
+      const id = parseEntry(output).id;
+      if (seen.has(id)) throw new Error('存在重复日记 id。');
+      seen.add(id);
+      const candidate = path.join(reviewDir, `${id}.md`);
+      const existing = await fs.readFile(candidate, 'utf8').catch(() => null);
+      // 不覆盖人工编辑的待审稿。原稿变动后先报告差异，要求人工决定如何合并。
+      const generatedPath = path.join(reviewDir, `${id}.generated.sha256`);
+      const previousGenerated = (await fs.readFile(generatedPath, 'utf8').catch(() => '')).trim();
+      const nextGenerated = digest(output);
+      if (existing && previousGenerated && digest(existing) !== previousGenerated) {
+        if (previousGenerated !== nextGenerated) {
+          throw new Error(`${id}：原稿和人工公开稿均有修改，请先人工合并；现有公开稿未覆盖。`);
+        }
+      } else {
+        await fs.writeFile(candidate, output);
       }
-    } else {
-      await fs.writeFile(candidate, output);
+      await fs.writeFile(generatedPath, nextGenerated + '\n');
+      alerts += reportAlerts(id, findAlerts(await fs.readFile(candidate, 'utf8'), rules));
+      console.log(`已准备待审稿：${id}`);
+    } catch (error) {
+      skipped.push(name);
+      console.log(`已跳过：${name} —— ${error.message}`);
     }
-    await fs.writeFile(generatedPath, nextGenerated + '\n');
-    console.log(`已准备待审稿：${id}`);
   }
+  if (skipped.length) console.log(`\n跳过了 ${skipped.length} 个不能整理成日记的文件（不是日记原稿，或还没加元信息）。其余文件照常整理。`);
+  if (alerts) console.log(`\n以上 ${alerts} 处需要你自己处理：脚本只提醒，不替你改。改完直接编辑 ../private/review/ 里的待审稿。`);
 }
 
 async function approve(id) {
@@ -78,6 +104,7 @@ async function check() {
 
 async function status() {
   const manifest = await readManifest();
+  const rules = await loadRules();
   let pending = 0;
   for (const name of await mdNames(reviewDir)) {
     const id = name.slice(0, -3);
@@ -85,6 +112,13 @@ async function status() {
     const approved = manifest[id]?.sha256 === digest(text);
     console.log(`${approved ? '已审核' : '待审核'}：${id}`);
     if (!approved) pending++;
+    // 提醒清单读不了不能让 status 整个失败 —— 失败会被当成「没有待审稿」，
+    // 反而把审核闸打开。这里只报出来，不改判定。
+    try {
+      reportAlerts(id, findAlerts(text, rules));
+    } catch (error) {
+      console.log(`⚠️ 提醒清单读不了：${error.message}`);
+    }
   }
   if (pending && process.argv.includes('--fail-on-pending')) throw new Error(`${pending} 篇待审核，暂不自动推送。`);
 }

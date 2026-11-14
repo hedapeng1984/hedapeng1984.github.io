@@ -55,7 +55,7 @@ export function redactEntry(text, rules) {
   const entry = parseEntry(text, { allowUnreviewedLinks: true });
   const replace = value => {
     let result = value;
-    for (const [from, to] of buildReplacements(rules)) {
+    for (const [from, to] of buildMaskRules(rules)) {
       result = result.split(from).join(to);
     }
     return result
@@ -79,17 +79,15 @@ export function redactEntry(text, rules) {
 }
 
 /**
- * 把规则整理成一张「原文 → 替代写法」的表，按原文长度倒序（长��先替，避免短串先命中）。
+ * 把规则整理成一张「原文 → 替代写法」的表，按原文长度倒序（长的先替，避免短串先命中）。
  *
- * 两类规则：
- *   replacements —— 手写字面替换，优先级最高（你已经明确指定了替代词，就用它）。
- *   names        —— 人名全名，转成拼音首字母（王小明 → WXM）。
+ * 只有一类规则：
+ *   names —— 人名全名，转成拼音首字母（王小明 → WXM）。
  *
  * 单字条目一律跳过：按你的规则，只出现姓氏时不需要脱敏（徐老师、李总）。
  * 把单字姓氏写进名单会误伤「李总」「王阿姨」这类称呼，也会误伤以姓氏开头的普通词。
  */
-export function buildReplacements(rules) {
-  const manual = Object.entries(rules?.replacements ?? {});
+export function buildMaskRules(rules) {
   const listed = [];
   const values = rules?.names;
   if (values !== undefined) {
@@ -103,7 +101,32 @@ export function buildReplacements(rules) {
       listed.push([source, masked]);
     }
   }
-  return [...manual, ...listed].sort((a, b) => b[0].length - a[0].length);
+  return listed.sort((a, b) => b[0].length - a[0].length);
+}
+
+/**
+ * 提醒清单：只报不改。
+ *
+ * 系统不猜哪些字敏感（中文里说明、和平、方向、马路都像人名，猜错的代价比漏掉更大），
+ * 所以由你把要盯的少数字串写进 rules.alert。整理时列出命中的行号，
+ * 由你自己决定改成什么写法 —— 改完直接编辑待审稿，原稿不动。
+ */
+export function findAlerts(text, rules) {
+  const values = rules?.alert;
+  if (values === undefined) return [];
+  if (!Array.isArray(values)) throw new Error('规则里的 alert 必须是一个列表。');
+  const lines = String(text ?? '').split('\n');
+  const hits = [];
+  for (const value of values) {
+    const term = String(value ?? '').trim();
+    if (!term) throw new Error('提醒清单不能包含空字符串。');
+    const at = [];
+    lines.forEach((line, index) => {
+      if (line.includes(term)) at.push(index + 1);
+    });
+    if (at.length) hits.push({ term, lines: at });
+  }
+  return hits;
 }
 
 export function assertApproved(text, record, id) {

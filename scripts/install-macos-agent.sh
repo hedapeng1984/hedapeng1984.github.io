@@ -48,13 +48,15 @@ mkdir -p "$PRIVATE_DIR/originals" "$PRIVATE_DIR/review"
 if [[ ! -f "$PRIVATE_DIR/privacy-rules.json" ]]; then
   cat > "$PRIVATE_DIR/privacy-rules.json" <<'JSON'
 {
-  "replacements": {
-  }
+  "names": [],
+  "alert": []
 }
 JSON
   echo "提示：已创建空的脱敏规则 $PRIVATE_DIR/privacy-rules.json"
-  echo "      在里面写下要替换的名字与地点，例如："
-  echo '        "replacements": { "某个名字": "一位朋友", "某个地点": "住处" }'
+  echo "      names 里写人名全名，整理时自动换成拼音首字母，例如："
+  echo '        "names": ["王小明"]'
+  echo "      alert 里写要盯的字串，整理时只提醒行号、不自动改，例如："
+  echo '        "alert": ["某某市某某路12号"]'
   echo "      补上规则之前，请不要把带真实身份信息的稿件放进公开流程。"
 fi
 

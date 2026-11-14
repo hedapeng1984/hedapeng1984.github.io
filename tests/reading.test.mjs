@@ -23,7 +23,7 @@ test('中文阅读计数包含汉字与英文词，忽略 Markdown 标记', () =
 });
 test('新笔记的 kind 元信息可以通过脱敏流程，未知分类拒绝', () => {
   const text = '---\nid: new-note\ntitle: 一页笔记\ndate: 2026-11-11\ntags: [阅读]\nsummary: 阅读后的想法\nkind: note\n---\n\n正文。\n';
-  assert.equal(parseEntry(redactEntry(text, { replacements: {} })).kind, 'note');
+  assert.equal(parseEntry(redactEntry(text, {})).kind, 'note');
   assert.throws(() => redactEntry(text.replace('kind: note', 'kind: unknown'), {}));
 });
 test('代码块渲染为带语言标签的 figure，关键字与字符串被高亮', () => {
