@@ -8,7 +8,7 @@ export const site = {
   trial: false,
   // Google Search Console 的站点所有权验证码。这串本来就要公开写在网页里，
   // 拿到后填在这里即可；留空则不输出这个 meta 标签。
-  verification: { google: '' },
+  verification: { google: '5LltCGrJRPiCTT2MnCW9bhfiUbduscjEPYs-mX6okRk' },
 };
 
 // 兼容首批稿件；新日记默认为 journal，新笔记可在元信息设置 kind: note。
