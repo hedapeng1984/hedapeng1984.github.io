@@ -91,3 +91,16 @@ zsh scripts/install-macos-agent.sh
 任务只覆盖"登录用户"域：Mac 休眠、关机、退出登录时不保证运行，恢复后补跑。网站由 GitHub Pages 托管，不依赖这台 Mac 一直开机。卸载：`zsh scripts/uninstall-macos-agent.sh`（加 `--purge` 连配置和日志一起删）。
 
 网页无统计、评论、外部字体或数据库。试刊结束后站点已开放搜索引擎收录：`src/lib/site.mjs` 里的 `trial` 改回 `true` 可一键恢复 noindex，`public/robots.txt` 负责放行抓取并指向 sitemap。收录本身不构成访问保护。
+
+### 搜索引擎收录
+
+收录要过两道闸，两道都得开：
+
+1. **页面 meta** —— `src/lib/site.mjs` 的 `trial: false` 会让每页输出 `<meta name="robots" content="index, follow">`。
+2. **robots.txt** —— `public/robots.txt` 写的是 `Allow: /` 并指向 sitemap。只改 meta 不改这个文件，爬虫在读到 meta 之前就被挡住了。
+
+**站点所有权验证**：Google Search Console 的验证码填在 `src/lib/site.mjs` 的 `verification.google`，留空则不输出这个 meta 标签。这串验证码本来就要公开写在网页里，可以直接粘进聊天或代码。
+
+**站点地图**：`https://www.hedapeng.com/sitemap.xml`（构建时生成，含首页、栏目页和全部文章）。在 Search Console 的「站点地图」里填这个地址即可。
+
+⚠️ 根域 `hedapeng.com` 目前没有 DNS 记录，只有 `www.hedapeng.com` 可访问 —— 域名服务器在阿里云（dns9/dns10.hichina.com），需要加根域记录时在阿里云 DNS 控制台操作。

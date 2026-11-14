@@ -16,6 +16,8 @@ export const metadata = {
   icons: { icon: '/favicon.svg' },
   openGraph: { title: site.name, description: site.description, siteName: site.name, locale: 'zh_CN', type: 'website' },
   alternates: { types: { 'application/rss+xml': '/rss.xml' } },
+  // 填了验证码才输出 <meta name="google-site-verification">，留空不影响页面。
+  verification: site.verification?.google ? { google: site.verification.google } : undefined,
 };
 const themeScript = `(function(){try{var p=localStorage.getItem('journal-theme')||'system';if(!['light','dark','warm','system'].includes(p))p='system';document.documentElement.dataset.theme=p==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;}catch(e){}})();`;
 

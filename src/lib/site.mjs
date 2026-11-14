@@ -6,6 +6,9 @@ export const site = {
   repository: 'https://github.com/hedapeng1984/hedapeng1984.github.io',
   // 试刊结束，站点已开放搜索引擎收录。改回 true 可一键恢复 noindex。
   trial: false,
+  // Google Search Console 的站点所有权验证码。这串本来就要公开写在网页里，
+  // 拿到后填在这里即可；留空则不输出这个 meta 标签。
+  verification: { google: '' },
 };
 
 // 兼容首批稿件；新日记默认为 journal，新笔记可在元信息设置 kind: note。
