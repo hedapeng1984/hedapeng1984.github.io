@@ -24,8 +24,12 @@ try {
   if (run('git', ['diff', '--cached', '--quiet'], { allowOne: true }) !== 0) throw new Error('有其他已暂存改动，请先人工处理。');
 
   run(process.execPath, ['scripts/content.mjs', 'prepare']);
-  // 有待审稿就到此为止：不构建、不提交、不推送，等人工读完 approve。
-  run(process.execPath, ['scripts/content.mjs', 'status', '--fail-on-pending']);
+  // 待审稿挡住的是「内容发布」，不是「代码推送」。
+  // 待审稿在 private/review/，不会进 content/entries，所以代码改动可以照常推上去 ——
+  // 否则审稿期间连脚本修复都发不出去（实测：等审稿的 12 小时里，一次代码修复卡在本地）。
+  // 内容侧的规则不变：有待审稿就不发布任何内容，等人工读完 approve。
+  const statusOut = run(process.execPath, ['scripts/content.mjs', 'status'], { capture: true });
+  const pendingCount = statusOut.split('\n').filter(line => line.startsWith('待审核：')).length;
   run(process.execPath, ['scripts/content.mjs', 'check']);
 
   // 拉取远端引用只为判断"有没有东西要推"，断网不算失败。
@@ -33,7 +37,13 @@ try {
   const contentChanges = run('git', ['status', '--porcelain', '--', 'content'], { capture: true });
   const local = run('git', ['rev-parse', 'HEAD'], { capture: true, allowFail: true });
   const remote = run('git', ['rev-parse', 'origin/main'], { capture: true, allowFail: true });
-  if (!contentChanges && local && remote && local === remote) {
+  if (pendingCount > 0) {
+    console.log(`${pendingCount} 篇待人工审核，内容暂不发布。`);
+    // 只推代码：待审稿不会跟着走，线上内容保持原样。
+    if (local && remote && local !== remote) {
+      run('git', ['push', 'origin', 'HEAD:main'], { retry: 3 });
+    }
+  } else if (!contentChanges && local && remote && local === remote) {
     console.log('没有新内容，跳过构建与推送。');
   } else {
     run(process.execPath, ['scripts/next.mjs', 'build', '--webpack']);

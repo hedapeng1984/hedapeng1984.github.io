@@ -47,7 +47,9 @@ Next.js 使用 `output: 'export'` 与 `trailingSlash: true`，构建产物为 `o
 
 脚本：`scripts/sync-macos.sh`（同步入口）、`scripts/sync-sources.mjs`（原稿同步）、`scripts/sync.mjs`（审核、构建、推送）；安装与卸载任务：`scripts/install-macos-agent.sh`、`scripts/uninstall-macos-agent.sh`。
 
-原稿默认放在本仓库外的 `../private/originals/`，替换规则在 `../private/privacy-rules.json`，也可用环境变量 `DIARY_PRIVATE_DIR` 指定。没有原稿时构建现有网站不受影响，自动整理任务会停止。需要人工阅读待审稿并批准，才能自动推送。确认指令：`node scripts/content.mjs approve <id> --i-reviewed-content`。
+原稿默认放在本仓库外的 `../private/originals/`，替换规则在 `../private/privacy-rules.json`，也可用环境变量 `DIARY_PRIVATE_DIR` 指定。没有原稿时构建现有网站不受影响，自动整理任务会停止。需要人工阅读待审稿并批准，才能自动推送内容。确认指令：`node scripts/content.mjs approve <id> --i-reviewed-content`。
+
+**待审稿挡住的是「内容发布」，不是「代码推送」**：待审稿在 `private/review/`，不会进 `content/entries`，所以审稿期间脚本修复照常推上线，线上文章保持原样不动。
 
 ### 脱敏规则
 

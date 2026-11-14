@@ -2,32 +2,34 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { findSuspects, redactEntry } from '../scripts/content-lib.mjs';
 
+// 测试数据一律用合成名字和合成地名 —— 不写日记里真出现过的名字与地址，
+// 免得它们跟着仓库一起公开。
 const entry = (body, extra = '') => `---
 id: sample-entry
-title: 和林知远散步
+title: 和王小明散步
 date: 2026-11-11
 tags: [生活]
-summary: 林知远在星河市梧桐路18号
+summary: 王小明在某某市某某路18号
 ${extra}
 ---
 
 ${body}
 `;
 
-const rules = { names: ['林知远', '陈书宁'], places: ['星河市梧桐路', '宁波'] };
+const rules = { names: ['王小明', '李小花'], places: ['某某市某某路', '宁波'] };
 
 test('名单里的人名与地点替换成拼音首字母', () => {
-  const text = redactEntry(entry('林知远和陈书宁在星河市梧桐路散步。'), rules);
-  assert.ok(text.includes('LZY和CSN在XHSWTL散步'), text);
-  assert.ok(!text.includes('林知远'));
-  assert.ok(!text.includes('陈书宁'));
-  assert.ok(!text.includes('星河市梧桐路'));
+  const text = redactEntry(entry('王小明和李小花在某某市某某路散步。'), rules);
+  assert.ok(text.includes('WXM和LXH在MMSMML散步'), text);
+  assert.ok(!text.includes('王小明'));
+  assert.ok(!text.includes('李小花'));
+  assert.ok(!text.includes('某某市某某路'));
 });
 
 test('标题、摘要、正文、标签都用同一套替换', () => {
-  const text = redactEntry(entry('林知远来了。'), rules);
-  assert.ok(!text.includes('林知远'));
-  assert.ok(text.includes('LZY'));
+  const text = redactEntry(entry('王小明来了。'), rules);
+  assert.ok(!text.includes('王小明'));
+  assert.ok(text.includes('WXM'));
 });
 
 test('只出现姓氏不脱敏：徐老师、李总原样保留', () => {
@@ -48,25 +50,25 @@ test('名单里的英文名取各词首字母', () => {
 });
 
 test('手写 replacements 优先于拼音首字母', () => {
-  const text = redactEntry(entry('林知远来了。'), { ...rules, replacements: { 林知远: '一位朋友' } });
+  const text = redactEntry(entry('王小明来了。'), { ...rules, replacements: { 王小明: '一位朋友' } });
   assert.ok(text.includes('一位朋友'), text);
-  assert.ok(!text.includes('LZY'), text);
+  assert.ok(!text.includes('WXM'), text);
 });
 
 test('更长的规则先替换，短规则不会先命中', () => {
-  const text = redactEntry(entry('林知远在。'), { names: ['林', '林知远'] });
-  assert.ok(text.includes('LZY'), text);
+  const text = redactEntry(entry('王小明在。'), { names: ['王', '王小明'] });
+  assert.ok(text.includes('WXM'), text);
 });
 
 test('没有登记的疑似人名与地点只报告，不自动替换', () => {
-  const text = redactEntry(entry('王小明在杭州东站等陈书宁。'), rules);
-  assert.ok(text.includes('王小明'), '未登记的人名不应被自动替换');
+  const text = redactEntry(entry('赵小军在杭州东站等李小花。'), rules);
+  assert.ok(text.includes('赵小军'), '未登记的人名不应被自动替换');
   assert.ok(text.includes('杭州东站'), '未登记的地点不应被自动替换');
-  assert.ok(text.includes('CSN'), '已登记的人名仍然要替换');
+  assert.ok(text.includes('LXH'), '已登记的人名仍然要替换');
 
-  const suspects = findSuspects(entry('王小明在杭州东站等陈书宁。'), rules);
-  assert.ok(suspects.names.includes('王小明'), JSON.stringify(suspects));
-  assert.ok(!suspects.names.includes('陈书宁'), '已登记的不应再报告');
+  const suspects = findSuspects(entry('赵小军在杭州东站等李小花。'), rules);
+  assert.ok(suspects.names.includes('赵小军'), JSON.stringify(suspects));
+  assert.ok(!suspects.names.includes('李小花'), '已登记的不应再报告');
   assert.ok(suspects.places.includes('杭州'), JSON.stringify(suspects));
 });
 
@@ -77,7 +79,7 @@ test('姓加称谓不算疑似人名', () => {
 });
 
 test('规则里的名单必须是列表', () => {
-  assert.throws(() => redactEntry(entry('正文。'), { names: '林知远' }), /必须是一个列表/);
+  assert.throws(() => redactEntry(entry('正文。'), { names: '王小明' }), /必须是一个列表/);
   assert.throws(() => redactEntry(entry('正文。'), { places: [''] }), /不能包含空字符串/);
 });
 
@@ -89,14 +91,14 @@ test('地点后面跟着通称的不算具体地点', () => {
 });
 
 test('地点前面的定语和介词不并入地名', () => {
-  const suspects = findSuspects(entry('他从清华大学去了美国杜克大学。'), rules);
-  assert.ok(suspects.places.includes('清华大学'), JSON.stringify(suspects));
-  assert.ok(suspects.places.includes('美国杜克大学'), JSON.stringify(suspects));
+  const suspects = findSuspects(entry('他从某某大学去了某某学院。'), rules);
+  assert.ok(suspects.places.includes('某某大学'), JSON.stringify(suspects));
+  assert.ok(suspects.places.includes('某某学院'), JSON.stringify(suspects));
   assert.ok(!suspects.places.some(item => item.startsWith('从')), JSON.stringify(suspects));
 });
 
 test('已登记地点的片段不再重复报告', () => {
-  // 名单里有「星河市梧桐路18号」，就不该再报「18号」
-  const suspects = findSuspects(entry('我们在星河市梧桐路18号碰面。'), { places: ['星河市梧桐路18号'] });
+  // 名单里有「某某市某某路18号」，就不该再报「18号」
+  const suspects = findSuspects(entry('我们在某某市某某路18号碰面。'), { places: ['某某市某某路18号'] });
   assert.ok(!suspects.places.includes('18号'), JSON.stringify(suspects));
 });

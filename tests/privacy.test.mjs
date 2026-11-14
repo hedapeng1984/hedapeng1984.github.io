@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { assertApproved, digest, parseEntry, redactEntry } from '../scripts/content-lib.mjs';
 
-const original = `---\nid: sample-entry\ntitle: 和林知远散步\ndate: 2026-11-11\ntags: [生活]\nsummary: 林知远在星河市梧桐路18号\nprivateNote: 不可外传\n---\n\n林知远留下 13800000000 和 lin.zhiyuan@example.com。\n`;
-const rules = { replacements: { '林知远': '一位朋友', '星河市梧桐路18号': '住处附近' } };
+const original = `---\nid: sample-entry\ntitle: 和王小明散步\ndate: 2026-11-11\ntags: [生活]\nsummary: 王小明在某某市某某路18号\nprivateNote: 不可外传\n---\n\n王小明留下 13800000000 和 lin@example.com。\n`;
+const rules = { replacements: { '王小明': '一位朋友', '某某市某某路18号': '住处附近' } };
 
 test('正文、标题、摘要均脱敏，私人元信息不进入公开稿', () => {
   const publicText = redactEntry(original, rules);
-  for (const secret of ['林知远', '星河市梧桐路18号', '13800000000', 'lin.zhiyuan@example.com', 'privateNote', '不可外传']) assert.ok(!publicText.includes(secret), secret);
+  for (const secret of ['王小明', '某某市某某路18号', '13800000000', 'lin@example.com', 'privateNote', '不可外传']) assert.ok(!publicText.includes(secret), secret);
   assert.equal(parseEntry(publicText).title, '和一位朋友散步');
   assert.ok(publicText.includes('［手机号已隐藏］'));
 });

@@ -39,7 +39,7 @@ export function pinyinInitials(text) {
 
 /**
  * 一个名称的替代写法。
- * 纯英文名取各词首字母（Tony Blair → TB）；中文名取拼音首字母（陈书宁 → CSN）。
+ * 纯英文名取各词首字母（Tony Blair → TB）；中文名取拼音首字母（王小明 → WXM）。
  */
 export function maskName(text) {
   const trimmed = String(text ?? '').trim();
@@ -84,7 +84,7 @@ const PLACE_SUFFIXES = ['大厦', '广场', '公园', '车站', '机场', '大�
 
 /** 地点名前面的定语、介词、时间词。匹配后要剥掉，否则「个不大的广场」「第二天在超市」会被整段当成地点。 */
 const PLACE_LEADING_NOISE = new Set(
-  '的了在从和与跟到过是有个不条种一两三四五六七八九十第昨今明那这们很最再又也就都而其它他她我您咱谁'.split(''),
+  '的了在从和与跟到过是有个不条种一两三四五六七八九十第昨今明那这们很最再又也就都而其它他她我您咱谁去回往离'.split(''),
 );
 
 /** 两个字、但其实是普通词的组合。误报成本很高（报告里天天出现，人就懒得看了）。 */
