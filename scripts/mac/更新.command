@@ -55,4 +55,4 @@ step "跑一次同步"
 zsh scripts/sync-macos.sh 2>&1 | sed 's/^/  /' || warn "同步未完成，详情见日志。"
 
 printf '\n  %s日志：~/Library/Logs/hedapeng-journal/sync.log%s\n' "$DIM" "$OFF"
-printf '  %s网站：https://www.hedapeng.com%s\n\n' "$DIM" "$OFF"
+printf '  %s网站：https://hedapeng.com%s\n\n' "$DIM" "$OFF"

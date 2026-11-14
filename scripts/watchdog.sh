@@ -25,7 +25,7 @@ ERROR_LOG="$LOG_DIR/error.log"
 STATE_FILE="${JOURNAL_STATE_FILE:-$SITE_DIR/.cache/health-state.env}"
 REPO="${JOURNAL_REPO:-hedapeng1984/hedapeng1984.github.io}"
 API="${JOURNAL_API:-https://api.github.com/repos/$REPO}"
-SITE_URL="${JOURNAL_SITE_URL:-https://www.hedapeng.com}"
+SITE_URL="${JOURNAL_SITE_URL:-https://hedapeng.com}"
 
 # 阈值（都可用环境变量覆盖，便于临时放宽做排查）
 IDLE_MINUTES="${HEALTH_IDLE_MINUTES:-45}"          # 多久没有新一轮同步算「任务没在跑」

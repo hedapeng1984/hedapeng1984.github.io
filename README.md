@@ -2,7 +2,7 @@
 
 基于 Next.js App Router 的 Markdown 日记网站，以李笑来官网的留白、衬线字、细分隔线和蓝红点色为审美参考，独立实现中文排版。当前为**七篇文章**：一篇虚构日记，以及六篇笔记。虚构内容与笔记分开标注。
 
-网址：https://www.hedapeng.com
+网址：https://hedapeng.com
 
 ## 开发
 
@@ -23,7 +23,7 @@ npm run preview
 
 只有 `content/entries/` 中已审核且 SHA-256 匹配的稿件才能构建。代码仓库不保存真实私人原稿或化名对应表。发布目录只接收已审核的公开文字；保留公开 HTTPS 来源，暂不接收图片、本地附件或 HTML。
 
-Next.js 使用 `output: 'export'` 与 `trailingSlash: true`，构建产物为 `out/`。推送 main 后由 GitHub Actions 自动构建并发布到 GitHub Pages。自定义域名为 www.hedapeng.com，不需要租用服务器或运行 Node.js 服务。
+Next.js 使用 `output: 'export'` 与 `trailingSlash: true`，构建产物为 `out/`。推送 main 后由 GitHub Actions 自动构建并发布到 GitHub Pages。自定义域名为 hedapeng.com，不需要租用服务器或运行 Node.js 服务。
 
 保留 `/diary/<id>/` 原网址。网站含日记、笔记、全文搜索、主题筛选、归档、文章目录、阅读进度、四态主题（跟随系统 / 浅色 / 暖纸 / 深色）、构建期代码高亮、打印样式和 RSS。中文正文桌面 18px、手机 17px，最大宽度 680px，表格可横向滚动。中英文字体随站点托管，开源许可见 `/font-licenses.txt`。
 
@@ -107,6 +107,6 @@ zsh scripts/install-macos-agent.sh
 
 **站点所有权验证**：Google Search Console 的验证码填在 `src/lib/site.mjs` 的 `verification.google`，留空则不输出这个 meta 标签。这串验证码本来就要公开写在网页里，可以直接粘进聊天或代码。
 
-**站点地图**：`https://www.hedapeng.com/sitemap.xml`（构建时生成，含首页、栏目页和全部文章）。在 Search Console 的「站点地图」里填这个地址即可。
+**站点地图**：`https://hedapeng.com/sitemap.xml`（构建时生成，含首页、栏目页和全部文章）。在 Search Console 的「站点地图」里填这个地址即可。
 
-⚠️ 根域 `hedapeng.com` 目前没有 DNS 记录，只有 `www.hedapeng.com` 可访问 —— 域名服务器在阿里云（dns9/dns10.hichina.com），需要加根域记录时在阿里云 DNS 控制台操作。
+**域名**：主域 `hedapeng.com`，`www.hedapeng.com` 由 GitHub Pages 自动 301 到主域。域名服务器在阿里云（dns9/dns10.hichina.com）：根域 `@` 用 4 条 A 记录指向 GitHub Pages（`185.199.108.153` / `.109` / `.110` / `.111`），`www` 用 CNAME 指向 `hedapeng1984.github.io`。仓库里的 `public/CNAME` 必须与主域一致 —— 它和 GitHub 的「自定义域」设置是一对，改一个不改都会导致证书签发到另一个域名上。

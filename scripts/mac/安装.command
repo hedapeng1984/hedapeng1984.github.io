@@ -27,7 +27,7 @@ TEMPLATE_DIR="$PACKAGE_ROOT/private-template"
 
 printf '%s\n' "$BOLD"
 printf '  日记自动同步 · 安装程序\n'
-printf '  目标站点：https://www.hedapeng.com\n'
+printf '  目标站点：https://hedapeng.com\n'
 printf '%s\n\n' "$OFF"
 
 # ---------------------------------------------------------------- 1. 环境检查
@@ -191,7 +191,7 @@ printf '\n%s' "$BOLD"
 printf '  安装完成\n'
 printf '%s\n\n' "$OFF"
 cat <<SUMMARY
-  网站      https://www.hedapeng.com
+  网站      https://hedapeng.com
   代码      $SITE_DIR
   私有目录  $PRIVATE_DIR
 

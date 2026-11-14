@@ -14,7 +14,7 @@ await fs.writeFile(path.join(output, 'font-licenses.txt'), fontLicenses.join('\n
 const expected = ['index.html', '404.html', 'journal/index.html', 'notes/index.html', 'archive/index.html', 'about/index.html', 'rss.xml', 'sitemap.xml', ...getEntries().map(entry => `diary/${entry.id}/index.html`)];
 for (const name of expected) await fs.access(path.join(output, name));
 const cname = (await fs.readFile(path.join(output, 'CNAME'), 'utf8')).trim();
-if (cname !== 'www.hedapeng.com') throw new Error('导出目录域名配置不符。');
+if (cname !== 'hedapeng.com') throw new Error('导出目录域名配置不符。');
 async function checkDirectory(directory) {
   for (const item of await fs.readdir(directory, { withFileTypes: true })) {
     const target = path.join(directory, item.name);
