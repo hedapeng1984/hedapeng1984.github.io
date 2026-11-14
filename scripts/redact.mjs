@@ -1,7 +1,7 @@
 // 脱敏工具：人名 → 拼音首字母。
 //
 // 就一条规则：privacy-rules.json 的 names 列表里写下的人名全名，
-// 整篇替换成拼音首字母（陈书宁 → CSN）。
+// 整篇替换成拼音首字母（王小明 → WXM）。
 //
 // 没有别的：
 //   - 不猜哪些字像人名。中文里说明、和平、方向、马路都像人名，猜错的代价比漏掉的更大，
@@ -38,7 +38,7 @@ export function pinyinInitials(text) {
 
 /**
  * 一个名称的替代写法。
- * 纯英文名取各词首字母（Tony Blair → TB）；中文名取拼音首字母（陈书宁 → CSN）。
+ * 纯英文名取各词首字母（Tony Blair → TB）；中文名取拼音首字母（王小明 → WXM）。
  */
 export function maskName(text) {
   const trimmed = String(text ?? '').trim();
